@@ -5,7 +5,7 @@
    "id": "A",
    "from": 42.9,
    "to": 43.7,
-   "factor": 3,
+   "factor": 4,
    "cx": 0.5
   },
   {
@@ -50,7 +50,8 @@
    "from": 80.1,
    "to": 81.1,
    "factor": 2.5,
-   "cx": 0.5
+   "cx": 0.5,
+   "annotations": "annotations_end.json"
   },
   {
    "id": "H",
