@@ -1,0 +1,16 @@
+node_modules/
+out/
+.env
+.env.*
+*.key
+*.pem
+*secret*
+*token*
+# исходное видео и промежуточные файлы: тяжёлые, в git не кладём
+clips/
+work/
+*.mp4
+*.mov
+*.webm
+public/vo/.eleven-ledger.json
+.claude/
