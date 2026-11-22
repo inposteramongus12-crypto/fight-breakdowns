@@ -121,6 +121,19 @@ if (v.status === 0) {
 	check('voice: длительность склейки ≈ сумма + паузы', Math.abs(pv - wj.total) < 0.15, `mp3 ${pv.toFixed(2)} с, words.total ${wj.total}`);
 	const again = await nodeAsync(['tools/voice.mjs', ep], env);
 	check('voice: повторный запуск не озвучивает заново (кеш)', again.status === 0 && !/озвучиваю/.test(again.out));
+	// расписание: реплики стартуют в заданные секунды; --only озвучивает выбранные строки без склейки
+	const ep3 = path.join(dir, 'ep3');
+	fs.mkdirSync(ep3, {recursive: true});
+	fs.copyFileSync(path.join(ep, 'script.ru.txt'), path.join(ep3, 'script.ru.txt'));
+	const o1 = await nodeAsync(['tools/voice.mjs', ep3, '--only', '1'], env);
+	check('voice --only: озвучена одна строка, склейки нет', o1.status === 0 && fs.existsSync(path.join(ep3, 'voice', '001.mp3')) && !fs.existsSync(path.join(ep3, 'voice', '002.mp3')) && !fs.existsSync(path.join(ep3, 'voice', 'voice.mp3')));
+	writeJson(path.join(ep3, 'schedule.json'), {starts: [0.5, 3.0], total: 6});
+	const sc = await nodeAsync(['tools/voice.mjs', ep3], env);
+	const wj3 = sc.status === 0 ? readJson(path.join(ep3, 'voice', 'words.json')) : {words: []};
+	check('voice schedule: первая реплика с 0.5 с, вторая с 3.0 с, общая длина 6 с', sc.status === 0 && Math.abs(wj3.words[0].t0 - 0.5) < 0.01 && Math.abs(wj3.words[3].t0 - 3.0) < 0.01 && Math.abs(probe_audio(path.join(ep3, 'voice', 'voice.mp3')) - 6) < 0.2, JSON.stringify([wj3.words[0]?.t0, wj3.words[3]?.t0]));
+	writeJson(path.join(ep3, 'schedule.json'), {starts: [0.5, 0.6], total: 6});
+	const ov = await nodeAsync(['tools/voice.mjs', ep3], env);
+	check('voice schedule: наложение реплик отклоняется', ov.status !== 0);
 	server.noAlign = true;
 	const ep2 = path.join(dir, 'ep2');
 	fs.mkdirSync(ep2, {recursive: true});

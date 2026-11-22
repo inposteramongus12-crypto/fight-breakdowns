@@ -1,0 +1,49 @@
+{
+ "clip": "clips/garcia-benn.mp4",
+ "segments": [
+  {
+   "id": "A",
+   "from": 42.9,
+   "to": 43.7,
+   "factor": 3,
+   "cx": 0.5
+  },
+  {
+   "id": "B",
+   "from": 37.0,
+   "to": 41.2,
+   "factor": 2,
+   "cx": 0.5
+  },
+  {
+   "id": "C",
+   "from": 41.9,
+   "to": 42.83,
+   "factor": 10,
+   "cx": 0.58,
+   "annotations": "annotations.json"
+  },
+  {
+   "id": "D",
+   "from": 42.9,
+   "to": 43.9,
+   "factor": 2.5,
+   "cx": 0.5
+  },
+  {
+   "id": "E",
+   "from": 44.0,
+   "to": 46.0,
+   "factor": 2.5,
+   "cx": 0.5
+  },
+  {
+   "id": "F",
+   "from": 42.2,
+   "to": 42.75,
+   "factor": 8,
+   "cx": 0.58,
+   "annotations": "annotations.json"
+  }
+ ]
+}

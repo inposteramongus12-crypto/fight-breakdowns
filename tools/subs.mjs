@@ -31,7 +31,7 @@ for (let i = 0; i < words.length; i++) {
 }
 if (opt.script) {
 	const tok = (s) => s.split(/\s+/).map((x) => x.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, '')).filter(Boolean);
-	const exp = tok(fs.readFileSync(opt.script, 'utf8'));
+	const exp = tok(fs.readFileSync(opt.script, 'utf8').split('\n').filter((l) => l.trim() && !l.trim().startsWith('#')).join(' '));
 	const got = words.map((x) => x.w);
 	if (exp.length !== got.length) die(`слов в сценарии ${exp.length}, в words.json ${got.length}`);
 	const bad = exp.findIndex((w, i) => w !== got[i]);

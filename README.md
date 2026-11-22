@@ -28,6 +28,8 @@ node tools/annotate.mjs work/slow.mp4 episodes/001/annotations.json work/ann.mp4
 node tools/verify.mjs work/slow.mp4 work/ann.mp4 episodes/001/annotations.json
 node tools/vertical.mjs work/ann.mp4 work/vert.mp4 --cx 0.45
 node tools/voice.mjs episodes/001 --plan
+node tools/voice.mjs episodes/001 --voice N [--only 1]   # озвучка; schedule.json задаёт старт каждой реплики
+node tools/build-short.mjs episodes/001                   # сегменты из timeline.json → шорт в out/
 node tools/subs.mjs work/vert.mp4 episodes/001/voice/words.json out/final.mp4 --script episodes/001/script.ru.txt
 ```
 

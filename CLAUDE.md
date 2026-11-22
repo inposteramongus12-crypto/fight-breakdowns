@@ -25,6 +25,6 @@
 cut → slowmo → annotate → vertical → subs → (озвучка: voice → words.json → subs; звук склеить отдельно)
 ```
 
-- `tools/cut.mjs`, `slowmo.mjs` (+ `timemap.mjs`), `annotate.mjs`, `vertical.mjs`, `subs.mjs`, `voice.mjs`, `frames.mjs`, `verify.mjs`.
+- `tools/cut.mjs`, `slowmo.mjs` (+ `timemap.mjs`), `annotate.mjs`, `vertical.mjs`, `subs.mjs`, `voice.mjs`, `frames.mjs`, `verify.mjs`, `build-short.mjs` (весь конвейер по `episodes/<имя>/timeline.json`).
 - `npm run selftest` проверяет инструменты на синтетическом клипе и поддельном сервере ElevenLabs (реальный API не трогает).
 - Рендер Remotion в этом облаке: предустановленный Chromium (`/opt/pw-browsers/chromium`), `--gl=angle`, у бинарников compositor `chmod +x` (делает `tools/lib/common.mjs`).

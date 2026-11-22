@@ -14,3 +14,4 @@ work/
 *.webm
 public/vo/.eleven-ledger.json
 .claude/
+episodes/*/voice/*.mp3

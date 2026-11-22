@@ -22,6 +22,7 @@ if (!process.env.NODE_USE_ENV_PROXY && (process.env.HTTPS_PROXY || process.env.h
 }
 
 const {pos, opt} = parseArgs(process.argv.slice(2), ['plan', 'force', 'no-timestamps']);
+const onlyIds = opt.only ? String(opt.only).split(',').map((x) => String(Number(x)).padStart(3, '0')) : null;
 if (!pos[0]) die('использование: node tools/voice.mjs episodes/001 [--plan] [--voice N] [--gap 0.25] [--force] [--keys N] [--no-timestamps]');
 const epDir = path.resolve(pos[0]);
 const scriptFile = path.join(epDir, 'script.ru.txt');
@@ -80,6 +81,7 @@ const lineInfo = [];
 for (let i = 0; i < lines.length; i++) {
 	const id = String(i + 1).padStart(3, '0');
 	const text = lines[i];
+	if (onlyIds && !onlyIds.includes(id)) continue;
 	const mp3 = path.join(outDir, id + '.mp3');
 	const alignFile = path.join(outDir, id + '.align.json');
 	if (!opt.force && made[id] === hash(text) && fs.existsSync(mp3) && fs.existsSync(alignFile)) {
@@ -108,26 +110,36 @@ for (let i = 0; i < lines.length; i++) {
 	await sleep(1200);
 }
 
-// склейка с паузами и общая шкала времени
-let offset = 0;
-const all = [];
-const inputs = [];
-const parts = [];
-lineInfo.forEach((l, i) => {
-	const d = probe_audio(l.mp3);
-	for (const w of l.align.words) all.push({w: w.w, t0: +(w.t0 + offset).toFixed(3), t1: +(w.t1 + offset).toFixed(3)});
-	inputs.push('-i', l.mp3);
-	parts.push(`[${i}:a]aresample=44100,aformat=channel_layouts=mono,apad=pad_dur=${gap}[a${i}]`);
-	offset += d + gap;
-});
-function probe_audio(file) {
+if (onlyIds) {
+	say(`озвучено только строки ${onlyIds.join(', ')}; склейка пропущена (--only)`);
+	process.exit(0);
+}
+// склейка: либо по schedule.json (начало каждой реплики в секундах итогового ролика), либо подряд с паузой gap
+const schedFile = path.join(epDir, 'schedule.json');
+const sched = fs.existsSync(schedFile) ? readJson(schedFile) : null;
+if (sched && sched.starts.length !== lineInfo.length) die(`в schedule.json ${sched.starts.length} стартов, а реплик ${lineInfo.length}`);
+const probe_audio = (file) => {
 	const r = spawnSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', file], {encoding: 'utf8'});
 	const d = Number(r.stdout);
 	if (!(d > 0)) die('не удалось определить длительность ' + file);
 	return d;
-}
-// apad добавляет паузу после реплики; длительность реплики берём как есть
-ff([...inputs, '-filter_complex', parts.join(';') + ';' + lineInfo.map((_, i) => `[a${i}]`).join('') + `concat=n=${lineInfo.length}:v=0:a=1[o]`, '-map', '[o]', '-c:a', 'libmp3lame', '-b:a', '128k', path.join(outDir, 'voice.mp3')], {quiet: true});
-writeJson(path.join(outDir, 'words.json'), {voice: voiceKey, gap, total: +offset.toFixed(3), words: all});
-void probe;
+};
+let offset = 0;
+const all = [];
+const inputs = [];
+const parts = [];
+const durs = lineInfo.map((l) => probe_audio(l.mp3));
+lineInfo.forEach((l, i) => {
+	const start = sched ? sched.starts[i] : offset;
+	if (sched && i && start < sched.starts[i - 1] + durs[i - 1] + 0.05) die(`реплика ${i + 1} начинается в ${start} с, а предыдущая идёт до ${(sched.starts[i - 1] + durs[i - 1]).toFixed(2)} с`);
+	for (const w of l.align.words) all.push({w: w.w, t0: +(w.t0 + start).toFixed(3), t1: +(w.t1 + start).toFixed(3)});
+	inputs.push('-i', l.mp3);
+	const ms = Math.round(start * 1000);
+	parts.push(sched ? `[${i}:a]aresample=44100,aformat=channel_layouts=mono,adelay=${ms}:all=1[a${i}]` : `[${i}:a]aresample=44100,aformat=channel_layouts=mono,apad=pad_dur=${gap}[a${i}]`);
+	offset = sched ? Math.max(offset, start + durs[i]) : offset + durs[i] + gap;
+});
+const total = sched?.total ?? offset;
+const joinF = sched ? lineInfo.map((_, i) => `[a${i}]`).join('') + `amix=inputs=${lineInfo.length}:normalize=0:duration=longest,apad=whole_dur=${total}[o]` : lineInfo.map((_, i) => `[a${i}]`).join('') + `concat=n=${lineInfo.length}:v=0:a=1[o]`;
+ff([...inputs, '-filter_complex', parts.join(';') + ';' + joinF, '-map', '[o]', '-c:a', 'libmp3lame', '-b:a', '128k', path.join(outDir, 'voice.mp3')], {quiet: true});
+writeJson(path.join(outDir, 'words.json'), {voice: voiceKey, gap, total: +total.toFixed(3), words: all, lines: lineInfo.map((l, i) => ({id: l.id, start: sched ? sched.starts[i] : null, dur: +durs[i].toFixed(3)}))});
 say(`готово: ${lineInfo.length} реплик, ${all.length} слов, ${offset.toFixed(1)} с; ${path.join(outDir, 'words.json')}`);
