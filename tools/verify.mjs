@@ -20,7 +20,12 @@ const {width: W, height: H} = info;
 const outDir = path.resolve(opt.out ?? 'work/verify');
 fs.mkdirSync(outDir, {recursive: true});
 const raw = readJson(jsonFile);
-const items = Array.isArray(raw) ? raw : raw.items;
+// плашки и метка главы (16:9) заданы в долях кадра, их отступ от края проверяет check-edges.mjs
+const items = (Array.isArray(raw) ? raw : raw.items).filter((it) => !['plaque', 'chapter'].includes(it.type));
+if (!items.length) {
+	say('в разметке только плашки/метка главы: сверять нечего (см. check-edges.mjs)');
+	process.exit(0);
+}
 const override = Object.fromEntries(String(opt.times ?? '').split(',').filter(Boolean).map((s) => s.split('=')).map(([k, v]) => [k, Number(v)]));
 
 const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));

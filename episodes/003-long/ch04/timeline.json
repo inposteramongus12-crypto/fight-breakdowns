@@ -4,7 +4,7 @@
   {
    "id": "E1",
    "clip": "clips/part2013_9.mp4",
-   "from": 40.0,
+   "from": 40,
    "to": 44.8,
    "factor": 1,
    "annotations": "annotations_E1.json"
@@ -12,25 +12,30 @@
   {
    "id": "E2",
    "clip": "clips/part2013_8.mp4",
-   "from": 36.0,
-   "to": 42.0,
+   "from": 36,
+   "to": 42,
    "factor": 1
   },
   {
    "id": "E3",
    "clip": "clips/part2013_7.mp4",
-   "from": 51.0,
-   "to": 57.0,
+   "from": 51,
+   "to": 57,
    "factor": 1,
    "annotations": "annotations_E3.json"
   },
   {
    "id": "E4",
    "clip": "clips/part2013_6.mp4",
-   "from": 12.0,
-   "to": 17.0,
+   "from": 12,
+   "to": 17,
    "factor": 1,
    "annotations": "annotations_E4.json"
   }
- ]
+ ],
+ "chapter": {
+  "n": 4,
+  "total": 8,
+  "title": "2013: контроль сверху"
+ }
 }
