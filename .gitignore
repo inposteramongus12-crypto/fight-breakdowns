@@ -15,3 +15,7 @@ work/
 public/vo/.eleven-ledger.json
 .claude/
 episodes/*/voice/*.mp3
+# звук и ключи
+*.mp3
+*.wav
+*.m4a

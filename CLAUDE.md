@@ -28,3 +28,9 @@ cut → slowmo → annotate → vertical → subs → (озвучка: voice →
 - `tools/cut.mjs`, `slowmo.mjs` (+ `timemap.mjs`), `annotate.mjs`, `vertical.mjs`, `subs.mjs`, `voice.mjs`, `frames.mjs`, `verify.mjs`, `build-short.mjs` (весь конвейер по `episodes/<имя>/timeline.json`).
 - `npm run selftest` проверяет инструменты на синтетическом клипе и поддельном сервере ElevenLabs (реальный API не трогает).
 - Рендер Remotion в этом облаке: предустановленный Chromium (`/opt/pw-browsers/chromium`), `--gl=angle`, у бинарников compositor `chmod +x` (делает `tools/lib/common.mjs`).
+
+## Новый выпуск
+
+1. Сначала прочитай `WORKFLOW.md` и `LESSONS.md`.
+2. Потом спроси пользователя, какой клип и что разбирать (боец, момент, тезис), и не начинай поиск момента, пока не получишь ответ.
+3. Дальше иди по шагам `WORKFLOW.md`; озвучка и полный рендер только после «да».
