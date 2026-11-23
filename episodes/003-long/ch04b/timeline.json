@@ -26,17 +26,23 @@
   {
    "id": "C4",
    "clip": "clips/part2013_9.mp4",
-   "from": 49.0,
+   "from": 49,
    "to": 50.002,
    "factor": 2.25
   },
   {
    "id": "C5",
    "clip": "clips/part2013_9.mp4",
-   "from": 50.0,
+   "from": 50,
    "to": 50.999,
    "factor": 2.44,
    "annotations": "ann_C5.json"
   }
- ]
+ ],
+ "chapter": {
+  "n": 0,
+  "total": 8,
+  "title": "Контроль сверху (вид сверху)",
+  "extra": true
+ }
 }

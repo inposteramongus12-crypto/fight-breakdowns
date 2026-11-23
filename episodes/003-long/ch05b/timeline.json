@@ -33,7 +33,7 @@
   {
    "id": "B5",
    "clip": "clips/part2013_4.mp4",
-   "from": 34.0,
+   "from": 34,
    "to": 35.401,
    "factor": 2.56,
    "annotations": "ann_B5.json"
@@ -60,5 +60,11 @@
    "to": 37.401,
    "factor": 4.97
   }
- ]
+ ],
+ "chapter": {
+  "n": 0,
+  "total": 8,
+  "title": "Ещё два захода в стойке",
+  "extra": true
+ }
 }
