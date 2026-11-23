@@ -41,7 +41,7 @@
   {
    "id": "S6",
    "clip": "clips/part2026.mp4",
-   "from": 26.0,
+   "from": 26,
    "to": 27.017,
    "factor": 3.5
   },
@@ -90,5 +90,10 @@
    "factor": 2.7,
    "annotations": "annotations_S12.json"
   }
- ]
+ ],
+ "chapter": {
+  "n": 6,
+  "total": 8,
+  "title": "2026: начало боя"
+ }
 }
