@@ -27,10 +27,17 @@
   {
    "id": "H4",
    "clip": "clips/part2026.mp4",
-   "from": 60.05,
-   "to": 62.378,
-   "factor": 1.8,
+   "from": 64.1,
+   "to": 64.95,
+   "factor": 2.5,
    "annotations": "a4.json"
+  },
+  {
+   "id": "H4b",
+   "clip": "clips/part2026.mp4",
+   "from": 65.05,
+   "to": 65.6,
+   "factor": 3.8
   },
   {
    "id": "H5",

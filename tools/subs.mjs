@@ -19,7 +19,7 @@ if (opt.mode && !phraseMode && opt.mode !== 'word') die('--mode: word или phr
 if (!phraseMode && (info.width !== 720 || info.height !== 1280)) say(`ВНИМАНИЕ: кадр ${info.width}×${info.height}, а субтитры рассчитаны на 720×1280`);
 const raw = readJson(wordsFile);
 const offset = Number(opt.offset ?? 0);
-const words = (raw.words ?? raw).map((x) => ({w: x.w, t0: x.t0 + offset, t1: x.t1 + offset}));
+const words = (raw.words ?? raw).map((x) => ({w: x.w, t0: x.t0 + offset, t1: x.t1 + offset, end: x.t1 + offset})); // end — конец слова по озвучке (t1 ниже растягивается до следующего слова)
 if (!words.length) die('в words.json нет слов');
 words.forEach((x, i) => {
 	if (typeof x.w !== 'string' || !x.w.trim()) die(`слово #${i}: пустой текст`);
@@ -67,7 +67,7 @@ if (phraseMode) {
 		const ws = words.slice(k, k + n);
 		k += n;
 		if (!ws.length) die(`фраза «${text}»: нет слов в words.json`);
-		return {text, t0: Math.max(0, ws[0].t0 - 0.05), t1: ws[ws.length - 1].t1 + hold};
+		return {text, t0: Math.max(0, ws[0].t0 - 0.05), t1: ws[ws.length - 1].end + hold}; // от конца слова по озвучке, не от растянутого t1: фраза не тянется на следующий кадр
 	});
 	phrases.forEach((p, i) => { if (phrases[i + 1]) p.t1 = Math.min(p.t1, phrases[i + 1].t0); });
 	const st = {};
