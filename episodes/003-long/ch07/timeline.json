@@ -20,10 +20,15 @@
   {
    "id": "C3",
    "clip": "clips/part2013_9.mp4",
-   "from": 40.0,
+   "from": 40,
    "to": 42.699,
    "factor": 2.16,
    "annotations": "c3.json"
   }
- ]
+ ],
+ "chapter": {
+  "n": 7,
+  "total": 8,
+  "title": "Вывод"
+ }
 }

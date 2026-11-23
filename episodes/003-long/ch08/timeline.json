@@ -12,10 +12,15 @@
   {
    "id": "D2",
    "clip": "clips/part2013_5.mp4",
-   "from": 35.0,
+   "from": 35,
    "to": 36.1,
    "factor": 2.4,
    "annotations": "d2.json"
   }
- ]
+ ],
+ "chapter": {
+  "n": 8,
+  "total": 8,
+  "title": "Вопрос"
+ }
 }
