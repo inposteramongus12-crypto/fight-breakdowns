@@ -4,7 +4,7 @@
   {
    "id": "A1",
    "clip": "clips/part2013_7.mp4",
-   "from": 39.0,
+   "from": 39,
    "to": 39.4,
    "factor": 7.73,
    "annotations": "ann_A1.json"
@@ -33,7 +33,7 @@
   {
    "id": "A5",
    "clip": "clips/part2013_7.mp4",
-   "from": 41.0,
+   "from": 41,
    "to": 42.099,
    "factor": 2.93
   },
@@ -45,5 +45,11 @@
    "factor": 5.35,
    "annotations": "ann_A6.json"
   }
- ]
+ ],
+ "chapter": {
+  "n": 0,
+  "total": 8,
+  "title": "Заход сверху",
+  "extra": true
+ }
 }
