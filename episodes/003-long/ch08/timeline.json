@@ -1,0 +1,21 @@
+{
+ "profile": "wide",
+ "segments": [
+  {
+   "id": "D1",
+   "clip": "clips/part2013_8.mp4",
+   "from": 0.3,
+   "to": 1.2,
+   "factor": 2,
+   "annotations": "d1.json"
+  },
+  {
+   "id": "D2",
+   "clip": "clips/part2013_5.mp4",
+   "from": 35.0,
+   "to": 36.1,
+   "factor": 2.4,
+   "annotations": "d2.json"
+  }
+ ]
+}

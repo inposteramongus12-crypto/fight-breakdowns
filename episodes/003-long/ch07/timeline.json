@@ -1,0 +1,29 @@
+{
+ "profile": "wide",
+ "segments": [
+  {
+   "id": "C1",
+   "clip": "clips/part2013_8.mp4",
+   "from": 0.3,
+   "to": 2.904,
+   "factor": 1.92,
+   "annotations": "c1.json"
+  },
+  {
+   "id": "C2",
+   "clip": "clips/part2026.mp4",
+   "from": 23.3,
+   "to": 24.495,
+   "factor": 4.2,
+   "annotations": "c2.json"
+  },
+  {
+   "id": "C3",
+   "clip": "clips/part2013_9.mp4",
+   "from": 40.0,
+   "to": 42.699,
+   "factor": 2.16,
+   "annotations": "c3.json"
+  }
+ ]
+}

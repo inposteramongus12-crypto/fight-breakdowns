@@ -1,0 +1,44 @@
+{
+ "profile": "wide",
+ "segments": [
+  {
+   "id": "H1",
+   "clip": "clips/part2026.mp4",
+   "from": 18.05,
+   "to": 19.244,
+   "factor": 3.4
+  },
+  {
+   "id": "H2",
+   "clip": "clips/part2026.mp4",
+   "from": 19.3,
+   "to": 21.533,
+   "factor": 3,
+   "annotations": "a2.json"
+  },
+  {
+   "id": "H3",
+   "clip": "clips/part2026.mp4",
+   "from": 54.7,
+   "to": 56.805,
+   "factor": 2.1,
+   "annotations": "a3.json"
+  },
+  {
+   "id": "H4",
+   "clip": "clips/part2026.mp4",
+   "from": 60.05,
+   "to": 62.378,
+   "factor": 1.8,
+   "annotations": "a4.json"
+  },
+  {
+   "id": "H5",
+   "clip": "clips/part2013_7.mp4",
+   "from": 18.0,
+   "to": 20.992,
+   "factor": 1.33,
+   "annotations": "a5.json"
+  }
+ ]
+}

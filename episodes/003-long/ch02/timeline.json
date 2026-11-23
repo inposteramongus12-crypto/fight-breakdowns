@@ -1,0 +1,37 @@
+{
+ "profile": "wide",
+ "segments": [
+  {
+   "id": "B1",
+   "clip": "clips/part2013_1.mp4",
+   "from": 0.0,
+   "to": 3.667,
+   "factor": 1.2,
+   "annotations": "b1.json"
+  },
+  {
+   "id": "B2",
+   "clip": "clips/part2013_1.mp4",
+   "from": 3.7,
+   "to": 6.142,
+   "factor": 1.2,
+   "annotations": "b2.json"
+  },
+  {
+   "id": "B3",
+   "clip": "clips/part2013_7.mp4",
+   "from": 18.0,
+   "to": 20.992,
+   "factor": 1.2,
+   "annotations": "b3.json"
+  },
+  {
+   "id": "B4",
+   "clip": "clips/part2013_1.mp4",
+   "from": 6.2,
+   "to": 8.11,
+   "factor": 2,
+   "annotations": "b4.json"
+  }
+ ]
+}
