@@ -194,5 +194,34 @@ if (!skipRender) {
 	const s2 = node(['tools/subs.mjs', vert, words, path.join(dir, 'x.mp4'), '--script', path.join(dir, 'script2.txt')]);
 	check('subs: слова не по сценарию отклоняются', s2.status !== 0);
 }
+
+// build-short с несколькими клипами: у каждого сегмента свой clip (второй клип зелёный)
+if (!skipRender) {
+	const src2 = path.join(dir, 'src2.mp4');
+	ff(['-f', 'lavfi', '-i', 'color=c=0x33aa33:s=1920x1080:r=30:d=2', '-f', 'lavfi', '-i', 'color=c=red:s=80x80:r=30:d=2', '-filter_complex', "[0:v][1:v]overlay=x='300+400*t':y=500,format=yuv420p", '-c:v', 'libx264', '-crf', '12', src2], {quiet: true});
+	const ep = path.join(dir, 'multiclip');
+	fs.mkdirSync(path.join(ep, 'voice'), {recursive: true});
+	fs.writeFileSync(path.join(ep, 'script.ru.txt'), 'Ян бьёт слева.\n');
+	writeJson(path.join(ep, 'voice', 'words.json'), {words: [{w: 'Ян', t0: 0.2, t1: 0.7}, {w: 'бьёт', t0: 0.7, t1: 1.2}, {w: 'слева', t0: 1.2, t1: 1.9}]});
+	ff(['-f', 'lavfi', '-i', 'anullsrc=r=44100:cl=mono', '-t', '2', '-c:a', 'libmp3lame', path.join(ep, 'voice', 'voice.mp3')], {quiet: true});
+	writeJson(path.join(ep, 'timeline.json'), {segments: [
+		{id: 'A', clip: path.relative(ROOT, src), from: 0.5, to: 1.0, factor: 2},
+		{id: 'B', clip: path.relative(ROOT, src2), from: 0.2, to: 0.7, factor: 2},
+	]});
+	const mcOut = path.join(dir, 'multiclip.mp4');
+	fs.rmSync(path.join(ROOT, 'work', 'short', 'multiclip'), {recursive: true, force: true});
+	const mc = node(['tools/build-short.mjs', ep, '--out', mcOut]);
+	check('build-short: два клипа в одном выпуске собираются', mc.status === 0 && fs.existsSync(mcOut), mc.status ? (mc.stdout + mc.stderr).slice(-300) : '');
+	if (mc.status === 0) {
+		const px = (t) => rawFrame(mcOut, t, 720, 1280).subarray(0, 3); // верхний левый угол: размытый фон своего клипа
+		const a = px(0.5), b = px(1.5);
+		check('build-short: первый сегмент из клипа 1 (синеватый фон), второй из клипа 2 (зелёный)', a[2] > a[1] && b[1] > b[2] + 40, `t0.5 rgb=${[...a]}, t1.5 rgb=${[...b]}`);
+	}
+	const noClip = path.join(dir, 'multiclip-noclip');
+	fs.mkdirSync(noClip, {recursive: true});
+	writeJson(path.join(noClip, 'timeline.json'), {segments: [{id: 'X', from: 0, to: 1, factor: 1}]});
+	const nc = node(['tools/build-short.mjs', noClip, '--out', path.join(dir, 'nc.mp4')]);
+	check('build-short: сегмент без clip отклоняется', nc.status !== 0);
+}
 console.log(fails ? `\nПРОВАЛЕНО проверок: ${fails}` : '\nвсе проверки пройдены');
 process.exit(fails ? 1 : 0);

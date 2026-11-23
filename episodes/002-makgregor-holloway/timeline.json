@@ -1,0 +1,91 @@
+{
+ "segments": [
+  {
+   "id": "H",
+   "clip": "clips/part2026.mp4",
+   "from": 18.0,
+   "to": 21.5,
+   "factor": 1,
+   "cx": 0.5
+  },
+  {
+   "id": "S2",
+   "clip": "clips/part2026.mp4",
+   "from": 54.7,
+   "to": 56.8,
+   "factor": 2,
+   "cx": 0.5
+  },
+  {
+   "id": "C3",
+   "clip": "clips/part2013_9.mp4",
+   "from": 36.0,
+   "to": 37.4,
+   "factor": 1.4,
+   "cx": 0.72
+  },
+  {
+   "id": "A",
+   "clip": "clips/part2013_8.mp4",
+   "from": 0.3,
+   "to": 2.7,
+   "factor": 2.5,
+   "cx": 0.7,
+   "annotations": "annotations_A.json"
+  },
+  {
+   "id": "B",
+   "clip": "clips/part2013_9.mp4",
+   "from": 37.8,
+   "to": 40.0,
+   "factor": 2.5,
+   "cx": 0.72,
+   "annotations": "annotations_B.json"
+  },
+  {
+   "id": "C",
+   "clip": "clips/part2013_9.mp4",
+   "from": 40.0,
+   "to": 45.5,
+   "factor": 1,
+   "cx": 0.6
+  },
+  {
+   "id": "K1",
+   "clip": "clips/part2026.mp4",
+   "from": 22.85,
+   "to": 23.25,
+   "factor": 2.5,
+   "cx": 0.55
+  },
+  {
+   "id": "K2",
+   "clip": "clips/part2026.mp4",
+   "from": 23.3,
+   "to": 24.9,
+   "factor": 2.5,
+   "cx": 0.72
+  },
+  {
+   "id": "F",
+   "clip": "clips/part2013_5.mp4",
+   "from": 34.5,
+   "to": 38.0,
+   "factor": 1,
+   "cx": 0.5
+  }
+ ],
+ "voice": {
+  "starts": [
+   0.25,
+   3.65,
+   7.8,
+   9.8,
+   12.4,
+   19.06,
+   26.8,
+   31.8
+  ],
+  "total": 35.16
+ }
+}

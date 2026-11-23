@@ -1,7 +1,8 @@
 // Сборка шорта 9:16 из episodes/<имя>/timeline.json: cut → slowmo → annotate → vertical по сегментам,
 // склейка, субтитры по одному слову, звук озвучки. Запускать после voice.mjs (нужны voice/voice.mp3 и words.json).
 //   node tools/build-short.mjs episodes/garcia-benn [--out out/garcia-benn.mp4] [--keep]
-// timeline.json: {clip, voice:{starts:[...], total}, segments:[{id, from, to, factor, cx, cy, zoom, full, annotations: "annotations.json" (необязательно)}]}
+// timeline.json: {clip (клип по умолчанию, необязателен, если clip задан у каждого сегмента), voice:{starts:[...], total}, segments:[{id, clip (необязательно: свой клип сегмента), from, to, factor, cx, cy, zoom, full, annotations: "annotations.json" (необязательно)}]}
+// Несколько клипов в одном выпуске: поле clip у сегмента перекрывает tl.clip; времена from/to/annotations — секунды именно этого клипа.
 // Времена в annotations.json — секунды ИСХОДНОГО клипа; сегмент переводит их во время замедленного сегмента сам ((t−from)·factor).
 import fs from 'node:fs';
 import path from 'node:path';
@@ -23,8 +24,14 @@ const run = (script, args) => {
 	return r.stdout;
 };
 
-// клип/сегменты
-const clip = path.resolve(ROOT, tl.clip);
+// клип/сегменты: у сегмента может быть свой clip (иначе берётся tl.clip)
+const clipOf = (s) => {
+	const c = s.clip ?? tl.clip;
+	if (!c) die(`сегмент ${s.id}: не задан clip ни у сегмента, ни в timeline.json`);
+	const f = path.resolve(ROOT, c);
+	if (!fs.existsSync(f)) die(`сегмент ${s.id}: нет клипа ${c}`);
+	return f;
+};
 let totalExpected = 0;
 const finals = [];
 for (const s of tl.segments) {
@@ -38,7 +45,7 @@ for (const s of tl.segments) {
 		continue;
 	}
 	const cut = path.join(d, 'cut.mp4');
-	run('cut.mjs', [clip, cut, '--from', s.from, '--to', s.to]);
+	run('cut.mjs', [clipOf(s), cut, '--from', s.from, '--to', s.to]);
 	let cur = cut;
 	if (s.factor > 1) {
 		cur = path.join(d, 'slow.mp4');
