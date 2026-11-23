@@ -66,7 +66,7 @@ export type Label = Base & {type: 'label'; text: string; x: number; y: number; s
 export type Plaque = Base & {type: 'plaque'; text: string; pos?: 'tl' | 'tr' | 'bl' | 'br'};
 
 /** Метка главы в левом верхнем углу (16:9): «3 / 8  Заход, сетка, перевод». */
-export type Chapter = Base & {type: 'chapter'; n: number; total: number; title: string};
+export type Chapter = Base & {type: 'chapter'; n: number; total: number; title: string; extra?: boolean}; // extra: вставка без номера, вместо «N / 8» показывается «+»
 
 export type Item = Arrow | Box | Mark | Limb | Icon | Label | Plaque | Chapter;
 

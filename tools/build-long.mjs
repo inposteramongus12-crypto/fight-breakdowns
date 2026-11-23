@@ -9,7 +9,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {spawnSync} from 'node:child_process';
-import {parseArgs, readJson, die, say, ROOT, ff, probe} from './lib/common.mjs';
+import {parseArgs, readJson, die, say, ROOT, ff, ffbin, probe} from './lib/common.mjs';
 
 const {pos, opt} = parseArgs(process.argv.slice(2), ['resume', 'keep', 'loudnorm', 'concat-only']);
 if (!pos[0]) die('использование: node tools/build-long.mjs episodes/<имя> [--chapter N] [--resume] [--keep] [--loudnorm] [--out out/<имя>.mp4]');
@@ -24,6 +24,10 @@ const outDir = path.join(ROOT, 'out');
 fs.mkdirSync(outDir, {recursive: true});
 const files = [];
 const timing = [];
+// вставки ("extra": true) не нумеруются: «N / total» считается только по основным главам, у вставки метка «+ название»
+const mainTotal = cfg.chapters.filter((c) => !c.extra).length;
+const mainNo = []; // номер основной главы по индексу
+cfg.chapters.reduce((k, c, i) => ((mainNo[i] = c.extra ? 0 : k + 1), c.extra ? k : k + 1), 0);
 cfg.chapters.forEach((ch, i) => {
 	const n = i + 1;
 	if (only && !only.includes(n)) return;
@@ -31,8 +35,8 @@ cfg.chapters.forEach((ch, i) => {
 	const tlFile = path.join(dir, 'timeline.json');
 	if (!fs.existsSync(tlFile)) die(`глава ${n} (${ch.id}): нет ${tlFile}`);
 	const tl = readJson(tlFile);
-	if (!tl.chapter) {
-		tl.chapter = {n, total: cfg.chapters.length, title: ch.title};
+	if (!tl.chapter || (ch.extra && !tl.chapter.extra)) {
+		tl.chapter = ch.extra ? {n: 0, total: mainTotal, title: ch.title, extra: true} : {n: mainNo[i], total: mainTotal, title: ch.title};
 		fs.writeFileSync(tlFile, JSON.stringify(tl, null, 1)); // метка главы берётся из long.json
 	}
 	const out = path.join(outDir, `${name}-${ch.id}.mp4`);
@@ -58,8 +62,32 @@ if (only && files.length < 2) {
 const list = path.join(outDir, `${name}.chapters.txt`);
 fs.writeFileSync(list, files.map((f) => `file '${f}'`).join('\n'));
 const out = path.resolve(opt.out ?? path.join(outDir, only ? `${name}-ch${only.join('-')}.mp4` : name + '.mp4'));
-const af = opt.loudnorm ? ['-af', 'loudnorm=I=-16:TP=-1.5:LRA=11'] : [];
-ff(['-f', 'concat', '-safe', '0', '-i', list, '-c:v', 'copy', ...(opt.loudnorm ? ['-c:a', 'aac', '-b:a', '192k', ...af] : ['-c:a', 'copy']), out], {quiet: true});
+// Звук: --loudnorm — двухпроходная нормализация (измерение → линейная подстройка, −16 LUFS) с проверкой истинного пика ≤ −1,0 дБ после AAC;
+// если пик выше, целевой TP снижается на 0,7 дБ и проход повторяется (до 4 раз).
+const peakOf = (file) => {
+	const r = spawnSync(ffbin(), ['-hide_banner', '-i', file, '-af', 'ebur128=peak=true', '-f', 'null', '-'], {encoding: 'utf8', maxBuffer: 1 << 26});
+	const m = [...(r.stderr ?? '').matchAll(/Peak:\s+(-?[\d.]+) dBFS/g)].pop();
+	const i = [...(r.stderr ?? '').matchAll(/I:\s+(-?[\d.]+) LUFS/g)].pop();
+	return {peak: m ? Number(m[1]) : NaN, lufs: i ? Number(i[1]) : NaN};
+};
+if (!opt.loudnorm) ff(['-f', 'concat', '-safe', '0', '-i', list, '-c', 'copy', out], {quiet: true});
+else {
+	const tmp = out.replace(/\.mp4$/, '.raw.mp4');
+	ff(['-f', 'concat', '-safe', '0', '-i', list, '-c', 'copy', tmp], {quiet: true});
+	const meas = spawnSync(ffbin(), ['-hide_banner', '-i', tmp, '-vn', '-af', 'loudnorm=I=-16:TP=-2:LRA=11:print_format=json', '-f', 'null', '-'], {encoding: 'utf8', maxBuffer: 1 << 26});
+	const js = JSON.parse((meas.stderr ?? '').slice((meas.stderr ?? '').lastIndexOf('{')));
+	let tp = -2, res;
+	for (let k = 0; k < 4; k++) {
+		const f = `loudnorm=I=-16:TP=${tp}:LRA=11:measured_I=${js.input_i}:measured_TP=${js.input_tp}:measured_LRA=${js.input_lra}:measured_thresh=${js.input_thresh}:offset=${js.target_offset}:linear=true,alimiter=limit=${(10 ** ((tp - 0.5) / 20)).toFixed(4)}:level=disabled`;
+		ff(['-i', tmp, '-map', '0:v', '-map', '0:a', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '192k', '-af', f, out], {quiet: true});
+		res = peakOf(out);
+		say(`громкость: ${res.lufs} LUFS, истинный пик ${res.peak} dBFS (цель TP ${tp})`);
+		if (res.peak <= -1.0) break;
+		tp -= 0.7;
+	}
+	if (!(res.peak <= -1.0)) say(`ВНИМАНИЕ: истинный пик ${res.peak} dBFS выше −1,0`);
+	fs.rmSync(tmp, {force: true});
+}
 const o = probe(out);
 const sum = files.reduce((a, f) => a + probe(f).duration, 0);
 say(`готово: ${out} (${o.width}×${o.height}, ${o.duration.toFixed(2)} с; сумма глав ${sum.toFixed(2)} с)`);

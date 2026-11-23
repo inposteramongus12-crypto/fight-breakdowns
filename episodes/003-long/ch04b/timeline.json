@@ -1,0 +1,42 @@
+{
+ "profile": "wide",
+ "segments": [
+  {
+   "id": "C1",
+   "clip": "clips/part2013_9.mp4",
+   "from": 44.7,
+   "to": 45.5,
+   "factor": 4.45,
+   "annotations": "ann_C1.json"
+  },
+  {
+   "id": "C2",
+   "clip": "clips/part2013_9.mp4",
+   "from": 45.5,
+   "to": 46.501,
+   "factor": 2.8
+  },
+  {
+   "id": "C3",
+   "clip": "clips/part2013_9.mp4",
+   "from": 46.5,
+   "to": 47.698,
+   "factor": 2.34
+  },
+  {
+   "id": "C4",
+   "clip": "clips/part2013_9.mp4",
+   "from": 49.0,
+   "to": 50.002,
+   "factor": 2.25
+  },
+  {
+   "id": "C5",
+   "clip": "clips/part2013_9.mp4",
+   "from": 50.0,
+   "to": 50.999,
+   "factor": 2.44,
+   "annotations": "ann_C5.json"
+  }
+ ]
+}

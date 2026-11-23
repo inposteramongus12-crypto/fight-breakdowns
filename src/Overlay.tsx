@@ -217,7 +217,7 @@ const ChapterEl: React.FC<{c: Chapter; t: number; h: number}> = ({c, t, h}) => {
 	return (
 		<div style={{...pill(h), top: m, left: m, opacity: life(t, c.t0, t1, 0.2, 0.3)}}>
 			<span style={{color: '#45F6E7', marginRight: h * 0.016}}>
-				{c.n} / {c.total}
+				{c.extra ? '+' : `${c.n} / ${c.total}`}
 			</span>
 			{c.title}
 		</div>

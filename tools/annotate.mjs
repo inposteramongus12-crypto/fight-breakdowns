@@ -24,7 +24,7 @@ const need = {
 	icon: (i) => ['question', 'double-question', 'brain'].includes(i.kind) && isPt(i.at) && isPt(i.box),
 	label: (i) => typeof i.text === 'string' && Number.isFinite(i.x) && Number.isFinite(i.y),
 	plaque: (i) => typeof i.text === 'string' && (i.pos === undefined || ['tl', 'tr', 'bl', 'br'].includes(i.pos)),
-	chapter: (i) => Number.isFinite(i.n) && Number.isFinite(i.total) && typeof i.title === 'string',
+	chapter: (i) => (i.extra === true || (Number.isFinite(i.n) && Number.isFinite(i.total))) && typeof i.title === 'string',
 };
 items.forEach((it, n) => {
 	const name = `#${n} (${it.id ?? it.type})`;
