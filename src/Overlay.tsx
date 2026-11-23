@@ -184,17 +184,17 @@ const LabelEl: React.FC<{l: Label; t: number; ss: number}> = ({l, t, ss}) => {
 };
 
 // Плашки и метка главы (16:9): HTML-слой, размеры от высоты кадра, текст белый на тёмной полупрозрачной подложке.
-const pill = (h: number): React.CSSProperties => ({
+const pill = (h: number, k = 1): React.CSSProperties => ({
 	position: 'absolute',
 	fontFamily: 'Rubik, sans-serif',
 	fontWeight: 700,
-	fontSize: h * 0.034,
+	fontSize: h * 0.034 * k,
 	lineHeight: 1,
 	color: '#FFFFFF',
 	background: 'rgba(8,10,14,0.72)',
 	border: `${Math.max(1, h * 0.002)}px solid rgba(255,255,255,0.55)`,
-	borderRadius: h * 0.02,
-	padding: `${h * 0.014}px ${h * 0.026}px`,
+	borderRadius: h * 0.02 * k,
+	padding: `${h * 0.014 * k}px ${h * 0.026 * k}px`,
 	whiteSpace: 'nowrap',
 });
 const PlaqueEl: React.FC<{p: Plaque; t: number; h: number; w: number}> = ({p, t, h, w}) => {
@@ -202,7 +202,7 @@ const PlaqueEl: React.FC<{p: Plaque; t: number; h: number; w: number}> = ({p, t,
 	if (t < p.t0 || t > t1) return null;
 	const pos = p.pos ?? 'tr';
 	const m = h * 0.06; // отступ плашки от края кадра ≥ 60 px при высоте 1080
-	const st: React.CSSProperties = {...pill(h), opacity: life(t, p.t0, t1, 0.15, 0.2)};
+	const st: React.CSSProperties = {...pill(h, p.scale ?? 1), opacity: life(t, p.t0, t1, 0.15, 0.2)};
 	if (pos[0] === 't') st.top = m;
 	else st.bottom = m;
 	if (pos[1] === 'l') st.left = m;

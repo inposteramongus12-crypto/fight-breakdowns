@@ -12,6 +12,8 @@ import path from 'node:path';
 import {spawnSync} from 'node:child_process';
 import {parseArgs, readJson, writeJson, die, say, ROOT, ff, probe, profileOf, styleScaleFor} from './lib/common.mjs';
 import {scaleItem} from './lib/annot.mjs';
+import {synth, writeWav} from './sfx.mjs';
+import {mixVoiceBed, loudnormTo} from './lib/audio.mjs';
 
 const {pos, opt} = parseArgs(process.argv.slice(2), ['keep', 'resume']);
 if (!pos[0]) die('использование: node tools/build-short.mjs episodes/<имя> [--out out/<имя>.mp4]');
@@ -42,12 +44,14 @@ const clipOf = (s) => {
 };
 let totalExpected = 0;
 const finals = [];
+const segInfo = [];
 for (const s of tl.segments) {
 	const d = path.join(work, s.id);
 	fs.mkdirSync(d, {recursive: true});
 	const dur0 = s.blank ?? (s.to - s.from) * s.factor;
 	if (opt.resume && fs.existsSync(path.join(d, 'vert.mp4'))) {
 		finals.push(path.join(d, 'vert.mp4'));
+		segInfo.push({id: s.id, from: s.from, factor: s.factor, planned: dur0, vert: path.join(d, 'vert.mp4')});
 		totalExpected += dur0;
 		say(`сегмент ${s.id}: взят готовый (--resume)`);
 		continue;
@@ -111,6 +115,7 @@ for (const s of tl.segments) {
 		run('vertical.mjs', va);
 	}
 	finals.push(vert);
+	segInfo.push({id: s.id, from: s.from, factor: s.factor, planned: dur, vert});
 	say(`сегмент ${s.id}: ${dur.toFixed(2)} с`);
 }
 // склейка
@@ -121,14 +126,56 @@ ff(['-f', 'concat', '-safe', '0', '-i', list, '-c:v', 'libx264', '-crf', '14', '
 const jp = probe(joined);
 say(`склейка: ${jp.duration.toFixed(2)} с (по плану ${totalExpected.toFixed(2)} с)`);
 if (Math.abs(jp.duration - totalExpected) > 0.15) say('ВНИМАНИЕ: длительность склейки отличается от плана');
-// субтитры
-const subs = path.join(work, 'subs.mp4');
+// фактические старты сегментов (интерполяция удлиняет сегменты, поэтому плашки и эффекты считаем по готовым файлам)
+let at = 0;
+for (const g of segInfo) { g.start = at; g.dur = probe(g.vert).duration; at += g.dur; }
 const wordsFile = path.join(ep, 'voice', 'words.json');
 if (!fs.existsSync(wordsFile)) die('нет ' + wordsFile + ': сначала tools/voice.mjs');
-run('subs.mjs', [joined, wordsFile, subs, '--script', path.join(ep, 'script.ru.txt'), ...(wide ? ['--mode', 'phrase'] : []), ...(fs.existsSync(path.join(ep, 'script.voice.txt')) ? ['--voice-script', path.join(ep, 'script.voice.txt')] : [])]);
-// звук
+const vwords = readJson(wordsFile).words;
+const segOf = (id) => segInfo.find((g) => g.id === id) ?? die('нет сегмента ' + id);
+const events = [];
+// плашки на выходном кадре (после vertical): overlay.json {plaques:[{text, segs:[...], pos, scale, click}, {text, word, wordEnd, pos, scale, click}]}
+let base = joined;
+const ovFile = path.join(ep, 'overlay.json');
+if (fs.existsSync(ovFile)) {
+	const items = [];
+	for (const p of readJson(ovFile).plaques) {
+		let t0, t1;
+		if (p.segs) { const a = segOf(p.segs[0]), z = segOf(p.segs.at(-1)); t0 = a.start + (a.start === 0 ? 0.3 : 0.15); t1 = z.start + z.dur - 0.1; }
+		else {
+			const w0 = vwords.find((w) => w.w === p.word) ?? die('нет слова ' + p.word), w1 = vwords.find((w) => w.w === p.wordEnd) ?? die('нет слова ' + p.wordEnd);
+			t0 = w0.t0 - 0.05; t1 = w1.t1 + 0.3;
+		}
+		items.push({type: 'plaque', t0: +t0.toFixed(2), t1: +t1.toFixed(2), text: p.text, pos: p.pos ?? 'tr', scale: p.scale ?? 1});
+		if (p.click) events.push({t: +(t0 + 0.05).toFixed(2), type: 'click', note: `плашка «${p.text}»`});
+	}
+	const ovJson = path.join(work, 'overlay.items.json');
+	writeJson(ovJson, {items});
+	base = path.join(work, 'plaques.mp4');
+	run('annotate.mjs', [joined, ovJson, base, '--style-scale', 1]);
+}
+// субтитры
+const subs = path.join(work, 'subs.mp4');
+run('subs.mjs', [base, wordsFile, subs, '--script', path.join(ep, 'script.ru.txt'), ...(wide ? ['--mode', 'phrase'] : []), ...(fs.existsSync(path.join(ep, 'script.voice.txt')) ? ['--voice-script', path.join(ep, 'script.voice.txt')] : [])]);
+// звук: голос + эффекты (sfx.json: [{seg, off|src, type, amp}]) → микс с приглушением → loudnorm (−16 LUFS, истинный пик ≤ −1,0 дБ)
 const voice = path.join(ep, 'voice', 'voice.mp3');
-ff(['-i', subs, '-i', voice, '-map', '0:v', '-map', '1:a', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '160k', '-t', String(jp.duration), out], {quiet: true});
+const sfxFile = path.join(ep, 'sfx.json');
+if (fs.existsSync(sfxFile)) {
+	for (const e of readJson(sfxFile)) {
+		const g = segOf(e.seg);
+		const t = e.src !== undefined ? g.start + (e.src - g.from) * g.factor * (g.dur / g.planned) : g.start + (e.off ?? 0);
+		events.push({t: +t.toFixed(2), type: e.type, amp: e.amp, note: e.note ?? `${e.seg}${e.src !== undefined ? ' источник ' + e.src + ' с' : ''}`});
+	}
+	events.sort((a, b) => a.t - b.t);
+	writeJson(path.join(work, 'sfx.events.json'), events);
+	for (const e of events) say(`эффект ${e.t.toFixed(2)} с  ${e.type}  ${e.note ?? ''}`);
+	const bed = path.join(work, 'bed.wav'), mixed = path.join(work, 'mix.wav'), aac = path.join(work, 'audio.m4a');
+	writeWav(bed, synth(events, jp.duration + 0.5));
+	mixVoiceBed(voice, bed, mixed, jp.duration);
+	const res = loudnormTo(mixed, aac);
+	ff(['-i', subs, '-i', aac, '-map', '0:v', '-map', '1:a', '-c:v', 'copy', '-c:a', 'copy', '-t', String(jp.duration), out], {quiet: true});
+	say(`звук: ${res.lufs} LUFS, истинный пик ${res.peak} dBFS`);
+} else ff(['-i', subs, '-i', voice, '-map', '0:v', '-map', '1:a', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '160k', '-t', String(jp.duration), out], {quiet: true});
 const o = probe(out);
 say(`готово: ${out} (${o.width}×${o.height}, ${o.duration.toFixed(2)} с)`);
 if (!opt.keep) for (const f of [subs]) fs.rmSync(f, {force: true});

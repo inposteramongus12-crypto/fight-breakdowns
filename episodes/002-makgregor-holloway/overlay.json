@@ -1,0 +1,53 @@
+{
+ "plaques": [
+  {
+   "text": "2026",
+   "segs": [
+    "H",
+    "S2"
+   ],
+   "pos": "tr",
+   "scale": 0.7,
+   "click": true
+  },
+  {
+   "text": "по данным прессы",
+   "word": "шестьдесят",
+   "wordEnd": "колена",
+   "pos": "tl",
+   "scale": 0.7,
+   "click": true
+  },
+  {
+   "text": "2013",
+   "segs": [
+    "C3",
+    "A",
+    "B",
+    "C"
+   ],
+   "pos": "tr",
+   "scale": 0.7,
+   "click": true
+  },
+  {
+   "text": "2026",
+   "segs": [
+    "K1",
+    "K2"
+   ],
+   "pos": "tr",
+   "scale": 0.7,
+   "click": true
+  },
+  {
+   "text": "2013",
+   "segs": [
+    "F"
+   ],
+   "pos": "tr",
+   "scale": 0.7,
+   "click": true
+  }
+ ]
+}

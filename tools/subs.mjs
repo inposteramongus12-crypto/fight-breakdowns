@@ -21,6 +21,37 @@ const raw = readJson(wordsFile);
 const offset = Number(opt.offset ?? 0);
 const words = (raw.words ?? raw).map((x) => ({w: x.w, t0: x.t0 + offset, t1: x.t1 + offset, end: x.t1 + offset})); // end — конец слова по озвучке (t1 ниже растягивается до следующего слова)
 if (!words.length) die('в words.json нет слов');
+// режим «по одному слову» с отдельным текстом озвучки: слова озвучки, которых нет на экране (числа словами), склеиваются в одно экранное слово («шестьдесят девять» → «69»)
+const tokW = (s) => s.split(/\s+/).map((x) => x.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, '')).filter(Boolean);
+const readW = (f) => fs.readFileSync(f, 'utf8').split('\n').map((l) => l.trim()).filter((l) => l && !l.startsWith('#'));
+if (opt['voice-script'] && !phraseMode) {
+	if (!opt.script) die('--voice-script: нужен и --script (текст для экрана)');
+	const vl = readW(opt['voice-script']), sl = readW(opt.script);
+	if (vl.length !== sl.length) die(`в --voice-script ${vl.length} реплик, а в --script ${sl.length}`);
+	const allV = tokW(vl.join(' '));
+	if (allV.length !== words.length || allV.some((w, i) => w !== words[i].w)) die('слова words.json не совпали с --voice-script');
+	const disp = [];
+	let k = 0;
+	vl.forEach((line, li) => {
+		const vt = tokW(line), st = tokW(sl[li]);
+		let j = 0;
+		st.forEach((sw, si) => {
+			if (vt[j] === sw) { disp.push(words[k + j]); j++; return; }
+			const nxt = st[si + 1];
+			let j2 = j + 1;
+			if (nxt === undefined) j2 = vt.length;
+			else while (j2 < vt.length && vt[j2] !== nxt) j2++;
+			if (j2 > vt.length || (nxt !== undefined && j2 >= vt.length)) die(`реплика ${li + 1}: не нашёл слово озвучки «${nxt}» после «${sw}»`);
+			disp.push({w: sw, t0: words[k + j].t0, t1: words[k + j2 - 1].t1, end: words[k + j2 - 1].end});
+			j = j2;
+		});
+		if (j !== vt.length) die(`реплика ${li + 1}: остались слова озвучки`);
+		k += vt.length;
+	});
+	words.length = 0;
+	words.push(...disp);
+	say(`экранных слов ${words.length} (из ${allV.length} слов озвучки)`);
+}
 words.forEach((x, i) => {
 	if (typeof x.w !== 'string' || !x.w.trim()) die(`слово #${i}: пустой текст`);
 	if (!(x.t1 > x.t0)) die(`слово #${i} "${x.w}": t1 должно быть больше t0`);
@@ -35,8 +66,7 @@ for (let i = 0; i < words.length; i++) {
 }
 const tokF = (s) => s.split(/\s+/).map((x) => x.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, '')).filter(Boolean);
 const readL = (f) => fs.readFileSync(f, 'utf8').split('\n').map((l) => l.trim()).filter((l) => l && !l.startsWith('#'));
-if (opt['voice-script'] && !phraseMode) die('--voice-script поддерживается только с --mode phrase');
-if (opt['voice-script']) {
+if (opt['voice-script'] && phraseMode) {
 	if (!opt.script) die('--voice-script: нужен и --script (текст для экрана)');
 	const vl = readL(opt['voice-script']), sl = readL(opt.script);
 	if (vl.length !== sl.length) die(`в --voice-script ${vl.length} реплик, а в --script ${sl.length}`);

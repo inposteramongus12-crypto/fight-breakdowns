@@ -63,7 +63,7 @@ export type Icon = Base & {
 export type Label = Base & {type: 'label'; text: string; x: number; y: number; size?: number; color?: string};
 
 /** Плашка-пилюля в углу кадра (16:9): «по данным прессы», «UFC 329 · 11.07.2026». Позиция в долях кадра, размеры от высоты кадра. */
-export type Plaque = Base & {type: 'plaque'; text: string; pos?: 'tl' | 'tr' | 'bl' | 'br'};
+export type Plaque = Base & {type: 'plaque'; text: string; pos?: 'tl' | 'tr' | 'bl' | 'br'; scale?: number};
 
 /** Метка главы в левом верхнем углу (16:9): «3 / 8  Заход, сетка, перевод». */
 export type Chapter = Base & {type: 'chapter'; n: number; total: number; title: string; extra?: boolean}; // extra: вставка без номера, вместо «N / 8» показывается «+»

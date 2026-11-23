@@ -1,6 +1,7 @@
 // Проверки 16:9 по готовым сегментам и главе: (1) отступ накладок (плашки, метка главы) от края кадра ≥ 60 px,
 // (2) чёрные кадры на стыках сегментов и в главе.
 //   node tools/check-edges.mjs work/short/<имя>/ [--chapter out/<имя>.mp4] [--margin 60] [--step 0.5]
+//   шорт 720×1280: node tools/check-edges.mjs work/short/<имя>/ --size 720x1280 --pair joined.mp4 --over plaques.mp4 [--chapter out/<имя>.mp4]  (одна пара: без накладки и с накладкой)
 // Для каждого сегмента с wide.mp4 и ann.mp4 сравнивает кадры с накладкой и без неё (раз в --step секунд) и берёт
 // границы изменённых пикселей (одиночные пиксели без соседей отбрасываются как шум сжатия); изменения ближе --margin к краю считаются нарушением. Центральные рамки и стрелки на этот отступ
 // не проверяются, если они дальше от края; ближе — тоже попадут в отчёт (это нужно знать). Код выхода 2 при нарушении.
@@ -12,12 +13,13 @@ import {parseArgs, die, say, probe, ffbin} from './lib/common.mjs';
 const {pos, opt} = parseArgs(process.argv.slice(2));
 if (!pos[0]) die('использование: node tools/check-edges.mjs work/short/<имя>/ [--chapter out/<имя>.mp4] [--margin 60] [--step 0.5]');
 const margin = Number(opt.margin ?? 60), step = Number(opt.step ?? 0.5);
-const W = 1920, H = 1080, FS = W * H * 3;
+const [W, H] = String(opt.size ?? '1920x1080').split('x').map(Number), FS = W * H * 3;
 const raw = (file, fps) => spawnSync(ffbin(), ['-v', 'error', '-i', file, '-vf', `fps=${fps}`, '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-'], {maxBuffer: 1 << 30}).stdout;
 let bad = 0;
 const root = path.resolve(pos[0]);
-for (const d of fs.readdirSync(root).sort()) {
-	const wv = path.join(root, d, 'wide.mp4'), an = path.join(root, d, 'ann.mp4');
+const pairs = opt.pair ? [[path.join(root, String(opt.pair)), path.join(root, String(opt.over ?? ''))]] : null;
+for (const d of pairs ? ['pair'] : fs.readdirSync(root).sort()) {
+	const wv = pairs ? pairs[0][0] : path.join(root, d, 'wide.mp4'), an = pairs ? pairs[0][1] : path.join(root, d, 'ann.mp4');
 	if (!fs.existsSync(wv) || !fs.existsSync(an)) continue;
 	const a = raw(wv, 1 / step), b = raw(an, 1 / step);
 	const n = Math.min(Math.floor(a.length / FS), Math.floor(b.length / FS));
