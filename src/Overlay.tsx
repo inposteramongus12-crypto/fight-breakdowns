@@ -1,6 +1,6 @@
 import React from 'react';
 import {AbsoluteFill, useCurrentFrame, useVideoConfig} from 'remotion';
-import type {Arrow, Box, Icon, Item, Key, Label, Limb, Mark, OverlayProps, P} from './types';
+import type {Arrow, Box, Chapter, Icon, Item, Key, Label, Limb, Mark, OverlayProps, P, Plaque} from './types';
 
 // Стиль по референсам (FORMAT.md): белые тонкие линии с мягким свечением, рамки 4 px,
 // красный ≈#FF3B3B для заливки и отметок. Толщины даны в пикселях итогового кадра 9:16
@@ -183,6 +183,47 @@ const LabelEl: React.FC<{l: Label; t: number; ss: number}> = ({l, t, ss}) => {
 	);
 };
 
+// Плашки и метка главы (16:9): HTML-слой, размеры от высоты кадра, текст белый на тёмной полупрозрачной подложке.
+const pill = (h: number): React.CSSProperties => ({
+	position: 'absolute',
+	fontFamily: 'Rubik, sans-serif',
+	fontWeight: 700,
+	fontSize: h * 0.034,
+	lineHeight: 1,
+	color: '#FFFFFF',
+	background: 'rgba(8,10,14,0.72)',
+	border: `${Math.max(1, h * 0.002)}px solid rgba(255,255,255,0.55)`,
+	borderRadius: h * 0.02,
+	padding: `${h * 0.014}px ${h * 0.026}px`,
+	whiteSpace: 'nowrap',
+});
+const PlaqueEl: React.FC<{p: Plaque; t: number; h: number; w: number}> = ({p, t, h, w}) => {
+	const t1 = p.t1 ?? p.t0 + 2;
+	if (t < p.t0 || t > t1) return null;
+	const pos = p.pos ?? 'tr';
+	const m = h * 0.045;
+	const st: React.CSSProperties = {...pill(h), opacity: life(t, p.t0, t1, 0.15, 0.2)};
+	if (pos[0] === 't') st.top = m;
+	else st.bottom = m;
+	if (pos[1] === 'l') st.left = m;
+	else st.right = m;
+	void w;
+	return <div style={st}>{p.text}</div>;
+};
+const ChapterEl: React.FC<{c: Chapter; t: number; h: number}> = ({c, t, h}) => {
+	const t1 = c.t1 ?? c.t0 + 2.5;
+	if (t < c.t0 || t > t1) return null;
+	const m = h * 0.045;
+	return (
+		<div style={{...pill(h), top: m, left: m, opacity: life(t, c.t0, t1, 0.2, 0.3)}}>
+			<span style={{color: '#45F6E7', marginRight: h * 0.016}}>
+				{c.n} / {c.total}
+			</span>
+			{c.title}
+		</div>
+	);
+};
+
 export const Overlay: React.FC<OverlayProps> = ({items, styleScale, width, height}) => {
 	const frame = useCurrentFrame();
 	const {fps} = useVideoConfig();
@@ -211,10 +252,13 @@ export const Overlay: React.FC<OverlayProps> = ({items, styleScale, width, heigh
 									return <IconEl key={key} i={x} t={t} ss={ss} />;
 								case 'label':
 									return <LabelEl key={key} l={x} t={t} ss={ss} />;
+								default:
+									return null;
 							}
 						}),
 				)}
 			</svg>
+			{items.map((x, k) => (x.type === 'plaque' ? <PlaqueEl key={`pl${k}`} p={x} t={t} h={height} w={width} /> : x.type === 'chapter' ? <ChapterEl key={`ch${k}`} c={x} t={t} h={height} /> : null))}
 		</AbsoluteFill>
 	);
 };

@@ -223,5 +223,56 @@ if (!skipRender) {
 	const nc = node(['tools/build-short.mjs', noClip, '--out', path.join(dir, 'nc.mp4')]);
 	check('build-short: сегмент без clip отклоняется', nc.status !== 0);
 }
+
+// 16:9: wide.mjs, субтитры фразами, плашка, метка главы, build-long из двух глав
+if (!skipRender) {
+	const src3 = path.join(dir, 'src720.mp4');
+	ff(['-f', 'lavfi', '-i', 'color=c=0x445566:s=1280x720:r=30:d=2', '-f', 'lavfi', '-i', 'color=c=red:s=80x80:r=30:d=2', '-filter_complex', 'overlay=x=600:y=300,format=yuv420p', '-c:v', 'libx264', '-crf', '12', src3], {quiet: true});
+	const wideOut = path.join(dir, 'wide.mp4');
+	const wr = node(['tools/wide.mjs', src3, wideOut]);
+	const wp = probe(wideOut);
+	check('wide: 1280×720 → 1920×1080', wr.status === 0 && wp.width === 1920 && wp.height === 1080, `${wp.width}×${wp.height}`);
+	const wcx = redCentroid(rawFrame(wideOut, 0.5, 1920, 1080), 1920, 1080);
+	check('wide: красный квадрат на месте после масштаба (центр x≈960)', Math.abs(wcx - 960) < 8, `x=${wcx.toFixed(0)}`);
+	check('wide: неверный --zoom отклоняется', node(['tools/wide.mjs', src3, path.join(dir, 'w2.mp4'), '--zoom', '0.5']).status !== 0);
+	const lp = path.join(dir, 'long');
+	fs.rmSync(lp, {recursive: true, force: true});
+	for (const id of ['ch01', 'ch02']) {
+		fs.mkdirSync(path.join(lp, id, 'voice'), {recursive: true});
+		fs.writeFileSync(path.join(lp, id, 'script.ru.txt'), 'Ян бьёт слева.\n');
+		writeJson(path.join(lp, id, 'voice', 'words.json'), {words: [{w: 'Ян', t0: 0.2, t1: 0.7}, {w: 'бьёт', t0: 0.7, t1: 1.2}, {w: 'слева', t0: 1.2, t1: 1.9}]});
+		ff(['-f', 'lavfi', '-i', 'anullsrc=r=44100:cl=mono', '-t', '2', '-c:a', 'libmp3lame', path.join(lp, id, 'voice', 'voice.mp3')], {quiet: true});
+	}
+	writeJson(path.join(lp, 'long.json'), {title: 't', chapters: [{id: 'ch01', title: 'Первая'}, {id: 'ch02', title: 'Вторая'}]});
+	writeJson(path.join(lp, 'ch01', 'annotations.json'), {items: [
+		{type: 'box', t0: 0.3, t1: 0.9, cx: 640, cy: 340, w: 120, h: 120},
+		{type: 'plaque', t0: 0.3, t1: 0.95, text: 'по данным прессы', pos: 'tr'},
+	]});
+	writeJson(path.join(lp, 'ch01', 'timeline.json'), {segments: [
+		{id: 'A', clip: path.relative(ROOT, src3), from: 0.2, to: 1.2, factor: 1, annotations: 'annotations.json'},
+		{id: 'B', blank: 1, color: '#102030'},
+	]});
+	writeJson(path.join(lp, 'ch02', 'timeline.json'), {segments: [{id: 'A', clip: path.relative(ROOT, src3), from: 0.2, to: 2.2 - 0.2 > 2 ? 2 : 1.7, factor: 1}]});
+	for (const id of ['ch01', 'ch02']) fs.rmSync(path.join(ROOT, 'work', 'short', 'long-' + id), {recursive: true, force: true});
+	const longOut = path.join(dir, 'long.mp4');
+	const bl = node(['tools/build-long.mjs', lp, '--out', longOut]);
+	check('build-long: две главы собираются в один файл', bl.status === 0 && fs.existsSync(longOut), bl.status ? (bl.stdout + bl.stderr).slice(-400) : '');
+	if (bl.status === 0) {
+		const lpb = probe(longOut);
+		const c1 = probe(path.join(ROOT, 'out', 'long-ch01.mp4')), c2 = probe(path.join(ROOT, 'out', 'long-ch02.mp4'));
+		check('build-long: 1920×1080, длительность = сумме глав (±0,3 с)', lpb.width === 1920 && lpb.height === 1080 && Math.abs(lpb.duration - (c1.duration + c2.duration)) < 0.3, `${lpb.duration.toFixed(2)} с = ${c1.duration.toFixed(2)} + ${c2.duration.toFixed(2)}`);
+		const px = (t, x, y) => { const f = rawFrame(longOut, t, 1920, 1080); const i = (y * 1920 + x) * 3; return [f[i], f[i + 1], f[i + 2]]; };
+		const whiteIn = (t, x0, x1, y0, y1) => { const f = rawFrame(longOut, t, 1920, 1080); let n = 0; for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) { const i = (y * 1920 + x) * 3; if (f[i] > 235 && f[i + 1] > 235 && f[i + 2] > 235) n++; } return n; };
+		check('wide annotate: рамка на 1,5× координат (левая сторона x≈870)', whiteIn(0.5, 864, 876, 500, 520) > 40, `белых ${whiteIn(0.5, 864, 876, 500, 520)}`);
+		const pl = px(0.5, 1920 - 49 - 14, 82), bgp = px(0.5, 1000, 82);
+		check('плашка «по данным прессы» вверху справа (тёмная подложка)', pl[0] < 45 && bgp[0] > 55, `плашка r=${pl[0]}, фон r=${bgp[0]}`);
+		const chip = px(0.5, 49 + 14, 82);
+		check('метка главы вверху слева (тёмная подложка)', chip[0] < 45, `r=${chip[0]}`);
+		const caps = whiteIn(1.0, 300, 1620, 880, 1060);
+		check('субтитры фразой внизу кадра (белый текст)', caps > 400, `белых ${caps}`);
+		check('нет субтитров до начала фразы (t=0,02)', whiteIn(0.02, 300, 1620, 880, 1060) < 40);
+	}
+	check('subs --mode phrase без --script отклоняется', node(['tools/subs.mjs', wideOut, path.join(lp, 'ch01', 'voice', 'words.json'), path.join(dir, 'x2.mp4'), '--mode', 'phrase']).status !== 0);
+}
 console.log(fails ? `\nПРОВАЛЕНО проверок: ${fails}` : '\nвсе проверки пройдены');
 process.exit(fails ? 1 : 0);

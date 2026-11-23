@@ -1,6 +1,7 @@
 // Субтитры по одному слову поверх 9:16-ролика: текст из сценария, тайминги из озвучки (words.json от voice.mjs).
 //   node tools/subs.mjs video.mp4 episodes/001/voice/words.json out.mp4 [--script episodes/001/script.ru.txt]
 //        [--offset 0] [--center 0.53] [--size 40] [--color #45F6E7] [--keep-overlay]
+//   --mode phrase  (16:9, лонг): субтитры фразами внизу кадра; фраза = строка сценария, нужен --script; --size — доля высоты (0.042), --center — центр строки (0.9), --hold 0.35 — сколько фраза держится после последнего слова
 // words.json: {"words": [{"w": "Ян", "t0": 0.12, "t1": 0.40}, ...]} — время в секундах итогового ролика.
 // С --script проверяется, что слова в words.json — это ровно слова сценария по порядку (регистр и написание сценария сохраняются).
 import fs from 'node:fs';
@@ -12,7 +13,9 @@ const {pos, opt} = parseArgs(process.argv.slice(2), ['keep-overlay']);
 if (pos.length < 3) die('использование: node tools/subs.mjs video.mp4 words.json out.mp4 [--script script.ru.txt] [--offset 0] [--center 0.53] [--size 40] [--color #45F6E7]');
 const [video, wordsFile, out] = pos;
 const info = probe(video);
-if (info.width !== 720 || info.height !== 1280) say(`ВНИМАНИЕ: кадр ${info.width}×${info.height}, а субтитры рассчитаны на 720×1280`);
+const phraseMode = opt.mode === 'phrase';
+if (opt.mode && !phraseMode && opt.mode !== 'word') die('--mode: word или phrase');
+if (!phraseMode && (info.width !== 720 || info.height !== 1280)) say(`ВНИМАНИЕ: кадр ${info.width}×${info.height}, а субтитры рассчитаны на 720×1280`);
 const raw = readJson(wordsFile);
 const offset = Number(opt.offset ?? 0);
 const words = (raw.words ?? raw).map((x) => ({w: x.w, t0: x.t0 + offset, t1: x.t1 + offset}));
@@ -37,6 +40,27 @@ if (opt.script) {
 	const bad = exp.findIndex((w, i) => w !== got[i]);
 	if (bad >= 0) die(`слово #${bad}: в сценарии "${exp[bad]}", в words.json "${got[bad]}"`);
 	say(`сценарий и words.json совпадают: ${exp.length} слов`);
+}
+if (phraseMode) {
+	if (!opt.script) die('--mode phrase: нужен --script (фраза = строка сценария)');
+	const tok = (l) => l.split(/\s+/).map((x) => x.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, '')).filter(Boolean);
+	const lines = fs.readFileSync(opt.script, 'utf8').split('\n').map((l) => l.trim()).filter((l) => l && !l.startsWith('#'));
+	const hold = Number(opt.hold ?? 0.35);
+	let k = 0;
+	const phrases = lines.map((text) => {
+		const n = tok(text).length;
+		const ws = words.slice(k, k + n);
+		k += n;
+		if (!ws.length) die(`фраза «${text}»: нет слов в words.json`);
+		return {text, t0: Math.max(0, ws[0].t0 - 0.05), t1: ws[ws.length - 1].t1 + hold};
+	});
+	phrases.forEach((p, i) => { if (phrases[i + 1]) p.t1 = Math.min(p.t1, phrases[i + 1].t0); });
+	const st = {};
+	if (opt.size) st.size = Number(opt.size);
+	if (opt.center) st.bottom = Number(opt.center);
+	if (opt.color) st.color = String(opt.color);
+	renderAndComposite({comp: 'Captions', video, out, props: {phrases, style: st}, workName: path.basename(out).replace(/\.[^.]+$/, '') + '.caps', keepOverlay: !!opt['keep-overlay']});
+	process.exit(0);
 }
 const style = {};
 if (opt.center) style.centerY = Number(opt.center);

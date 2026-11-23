@@ -62,7 +62,13 @@ export type Icon = Base & {
 
 export type Label = Base & {type: 'label'; text: string; x: number; y: number; size?: number; color?: string};
 
-export type Item = Arrow | Box | Mark | Limb | Icon | Label;
+/** Плашка-пилюля в углу кадра (16:9): «по данным прессы», «UFC 329 · 11.07.2026». Позиция в долях кадра, размеры от высоты кадра. */
+export type Plaque = Base & {type: 'plaque'; text: string; pos?: 'tl' | 'tr' | 'bl' | 'br'};
+
+/** Метка главы в левом верхнем углу (16:9): «3 / 8  Заход, сетка, перевод». */
+export type Chapter = Base & {type: 'chapter'; n: number; total: number; title: string};
+
+export type Item = Arrow | Box | Mark | Limb | Icon | Label | Plaque | Chapter;
 
 export type OverlayProps = {
 	width: number;
@@ -81,4 +87,14 @@ export type SubsProps = {
 	durationInFrames: number;
 	words: Word[];
 	style?: {size?: number; color?: string; centerY?: number; weight?: number};
+};
+
+export type Phrase = {text: string; t0: number; t1: number};
+export type CaptionsProps = {
+	width: number;
+	height: number;
+	fps: number;
+	durationInFrames: number;
+	phrases: Phrase[];
+	style?: {size?: number; color?: string; bottom?: number}; // size в долях высоты кадра (0.042), bottom — центр строки в долях высоты (0.9)
 };

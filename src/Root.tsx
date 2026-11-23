@@ -2,7 +2,8 @@ import React from 'react';
 import {Composition, continueRender, delayRender, staticFile} from 'remotion';
 import {Overlay} from './Overlay';
 import {Subs} from './Subs';
-import type {OverlayProps, SubsProps} from './types';
+import {Captions} from './Captions';
+import type {CaptionsProps, OverlayProps, SubsProps} from './types';
 
 // Rubik (variable 300–900) из public/fonts; таймаут большой, как в Tallest: короткий убивал вкладки рендера
 const fontsReady = delayRender('fonts', {timeoutInMilliseconds: 3600000});
@@ -39,6 +40,13 @@ export const Root: React.FC = () => (
 			component={Subs as React.FC<any>}
 			{...base}
 			defaultProps={{...base, words: []} as SubsProps}
+			calculateMetadata={meta as any}
+		/>
+		<Composition
+			id="Captions"
+			component={Captions as React.FC<any>}
+			{...base}
+			defaultProps={{...base, phrases: []} as CaptionsProps}
 			calculateMetadata={meta as any}
 		/>
 	</>

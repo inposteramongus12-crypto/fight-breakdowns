@@ -9,6 +9,12 @@ export const FPS = 30;
 export const W = 720; // итоговый кадр 9:16
 export const H = 1280;
 export const BAND_H = 900; // полоса с видео по центру (замер по референсам: 720×~900)
+// Профили выхода: short — 9:16 шортс (по умолчанию), wide — 16:9 лонг (1920×1080).
+export const PROFILES = {
+	short: {name: 'short', w: W, h: H},
+	wide: {name: 'wide', w: 1920, h: 1080},
+};
+export const profileOf = (name = 'short') => PROFILES[name] ?? die(`неизвестный профиль "${name}"; допустимо: ${Object.keys(PROFILES).join(', ')}`);
 
 export const say = (...a) => console.log('[' + new Date().toISOString().slice(11, 19) + ']', ...a);
 export const die = (msg) => {
@@ -118,7 +124,9 @@ export const remotionRender = (comp, outFile, propsFile, extra = [], {frames} = 
 
 /* ширина стрелок/рамок задаётся в пикселях ИТОГОВОГО кадра 9:16; на исходном клипе
    (например 1920×1080), который потом режется под полосу 720×900, линии надо увеличить */
-export const styleScaleFor = (w, h) => {
+export const styleScaleFor = (w, h, profile = 'short') => {
+	// wide: клип уже 1920×1080 (после wide.mjs), линии ≈3 px итогового кадра при толщине ядра 2.5
+	if (profile === 'wide') return 1.2 * (w / PROFILES.wide.w);
 	const cover = Math.max(W / w, BAND_H / h); // масштаб «cover» под полосу
 	return 1 / cover;
 };

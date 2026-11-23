@@ -19,3 +19,8 @@ episodes/*/voice/*.mp3
 *.mp3
 *.wav
 *.m4a
+# исключение (решение автора): синтетическая озвучка лонга 003 хранится в git (mp3, words.json); видео, кадры и клипы боёв по-прежнему нет
+!episodes/003-*/voice/
+!episodes/003-*/voice/*.mp3
+!episodes/003-*/*/voice/
+!episodes/003-*/*/voice/*.mp3
