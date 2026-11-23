@@ -125,7 +125,7 @@ if (Math.abs(jp.duration - totalExpected) > 0.15) say('ВНИМАНИЕ: дли�
 const subs = path.join(work, 'subs.mp4');
 const wordsFile = path.join(ep, 'voice', 'words.json');
 if (!fs.existsSync(wordsFile)) die('нет ' + wordsFile + ': сначала tools/voice.mjs');
-run('subs.mjs', [joined, wordsFile, subs, '--script', path.join(ep, 'script.ru.txt'), ...(wide ? ['--mode', 'phrase'] : [])]);
+run('subs.mjs', [joined, wordsFile, subs, '--script', path.join(ep, 'script.ru.txt'), ...(wide ? ['--mode', 'phrase'] : []), ...(fs.existsSync(path.join(ep, 'script.voice.txt')) ? ['--voice-script', path.join(ep, 'script.voice.txt')] : [])]);
 // звук
 const voice = path.join(ep, 'voice', 'voice.mp3');
 ff(['-i', subs, '-i', voice, '-map', '0:v', '-map', '1:a', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '160k', '-t', String(jp.duration), out], {quiet: true});

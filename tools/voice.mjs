@@ -1,7 +1,9 @@
 // Озвучка ElevenLabs с таймингами слов.
 //   node tools/voice.mjs episodes/001 --plan                 только посчитать знаки (без сети)
 //   node tools/voice.mjs episodes/001 [--voice N] [--gap 0.25] [--force] [--keys 2|2,5] [--no-timestamps]
-// Читает episodes/001/script.ru.txt (одна строка = одна реплика, пустые строки и строки с # пропускаются).
+// Читает episodes/001/script.voice.txt, если он есть (текст ДЛЯ ОЗВУЧКИ: числа и аббревиатуры словами), иначе script.ru.txt
+// (одна строка = одна реплика, пустые строки и строки с # пропускаются). Если есть оба файла, число реплик должно совпасть:
+// на экране и в субтитрах остаётся script.ru.txt (см. subs.mjs --voice-script).
 // Пишет episodes/001/voice/: NNN.mp3, NNN.align.json, voice.mp3 (склейка с паузами) и words.json
 // ({"words":[{"w","t0","t1"}]}, время в секундах склеенной дорожки) — это вход для tools/subs.mjs.
 // Тайминги берутся из ответа /v1/text-to-speech/{voice}/with-timestamps (посимвольная разметка, по OpenAPI-описанию ElevenLabs);
@@ -25,9 +27,13 @@ const {pos, opt} = parseArgs(process.argv.slice(2), ['plan', 'force', 'no-timest
 const onlyIds = opt.only ? String(opt.only).split(',').map((x) => String(Number(x)).padStart(3, '0')) : null;
 if (!pos[0]) die('использование: node tools/voice.mjs episodes/001 [--plan] [--voice N] [--gap 0.25] [--force] [--keys N] [--no-timestamps]');
 const epDir = path.resolve(pos[0]);
-const scriptFile = path.join(epDir, 'script.ru.txt');
+const screenFile = path.join(epDir, 'script.ru.txt');
+const voiceFile = path.join(epDir, 'script.voice.txt');
+const scriptFile = fs.existsSync(voiceFile) ? voiceFile : screenFile;
 if (!fs.existsSync(scriptFile)) die('нет ' + scriptFile);
-const lines = fs.readFileSync(scriptFile, 'utf8').split('\n').map((s) => s.trim()).filter((s) => s && !s.startsWith('#'));
+const readLines = (f) => fs.readFileSync(f, 'utf8').split('\n').map((s) => s.trim()).filter((s) => s && !s.startsWith('#'));
+const lines = readLines(scriptFile);
+if (scriptFile === voiceFile && fs.existsSync(screenFile) && readLines(screenFile).length !== lines.length) die(`в script.voice.txt ${lines.length} реплик, а в script.ru.txt ${readLines(screenFile).length}`);
 if (!lines.length) die('в сценарии нет реплик');
 const chars = lines.reduce((a, l) => a + [...l].length, 0);
 if (opt.plan) {

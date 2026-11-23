@@ -228,6 +228,7 @@ if (!skipRender) {
 if (!skipRender) {
 	const src3 = path.join(dir, 'src720.mp4');
 	ff(['-f', 'lavfi', '-i', 'color=c=0x445566:s=1280x720:r=30:d=2', '-f', 'lavfi', '-i', 'color=c=red:s=80x80:r=30:d=2', '-filter_complex', 'overlay=x=600:y=300,format=yuv420p', '-c:v', 'libx264', '-crf', '12', src3], {quiet: true});
+	const whiteIn2 = (f, t) => { const b = rawFrame(f, t, 1920, 1080); let n = 0; for (let y = 880; y < 1060; y++) for (let x = 300; x < 1620; x++) { const i = (y * 1920 + x) * 3; if (b[i] > 235 && b[i + 1] > 235 && b[i + 2] > 235) n++; } return n; };
 	const wideOut = path.join(dir, 'wide.mp4');
 	const wr = node(['tools/wide.mjs', src3, wideOut]);
 	const wp = probe(wideOut);
@@ -271,6 +272,28 @@ if (!skipRender) {
 		const caps = whiteIn(1.0, 300, 1620, 880, 1060);
 		check('субтитры фразой внизу кадра (белый текст)', caps > 400, `белых ${caps}`);
 		check('нет субтитров до начала фразы (t=0,02)', whiteIn(0.02, 300, 1620, 880, 1060) < 40);
+	}
+
+	// текст озвучки отдельно от экранного (числа словами): субтитры сверяются с озвучкой, на экране остаётся script.ru.txt
+	{
+		const vd = path.join(lp, 'ch03');
+		fs.mkdirSync(path.join(vd, 'voice'), {recursive: true});
+		fs.writeFileSync(path.join(vd, 'script.ru.txt'), 'Ян бьёт в 2013-м.\n');
+		fs.writeFileSync(path.join(vd, 'script.voice.txt'), 'Ян бьёт в две тысячи тринадцатом.\n');
+		const vw = {words: [['Ян', 0.2, 0.5], ['бьёт', 0.5, 0.9], ['в', 0.9, 1.0], ['две', 1.0, 1.3], ['тысячи', 1.3, 1.7], ['тринадцатом', 1.7, 2.3]].map(([w, t0, t1]) => ({w, t0, t1}))};
+		writeJson(path.join(vd, 'voice', 'words.json'), vw);
+		ff(['-f', 'lavfi', '-i', 'anullsrc=r=44100:cl=mono', '-t', '2.5', '-c:a', 'libmp3lame', path.join(vd, 'voice', 'voice.mp3')], {quiet: true});
+		writeJson(path.join(vd, 'timeline.json'), {segments: [{id: 'A', clip: path.relative(ROOT, src3), from: 0.2, to: 1.8, factor: 1}]});
+		fs.rmSync(path.join(ROOT, 'work', 'short', 'long-ch03'), {recursive: true, force: true});
+		const vo = path.join(dir, 'ch03.mp4');
+		const vr = node(['tools/build-short.mjs', vd, '--profile', 'wide', '--out', vo]);
+		check('subs: текст озвучки отдельно (числа словами), на экране цифры', vr.status === 0 && fs.existsSync(vo), vr.status ? (vr.stdout + vr.stderr).slice(-300) : '');
+		if (vr.status === 0) check('subs: на экране «2013-м» цифрами (белый текст внизу)', whiteIn2(vo, 1.0) > 300);
+		writeJson(path.join(vd, 'voice', 'words.json'), {words: vw.words.map((x) => (x.w === 'тысячи' ? {...x, w: 'тысяч'} : x))});
+		const vb = node(['tools/subs.mjs', vo, path.join(vd, 'voice', 'words.json'), path.join(dir, 'x3.mp4'), '--mode', 'phrase', '--script', path.join(vd, 'script.ru.txt'), '--voice-script', path.join(vd, 'script.voice.txt')]);
+		check('subs: слова не по тексту озвучки отклоняются', vb.status !== 0);
+		const vp = node(['tools/voice.mjs', vd, '--plan']);
+		check('voice --plan читает script.voice.txt (знаков по тексту озвучки)', /знаков: 33/.test(vp.stdout), vp.stdout.trim().slice(-100));
 	}
 	check('subs --mode phrase без --script отклоняется', node(['tools/subs.mjs', wideOut, path.join(lp, 'ch01', 'voice', 'words.json'), path.join(dir, 'x2.mp4'), '--mode', 'phrase']).status !== 0);
 }
