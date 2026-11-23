@@ -1,0 +1,94 @@
+{
+ "profile": "wide",
+ "segments": [
+  {
+   "id": "S1",
+   "clip": "clips/part2026.mp4",
+   "from": 22.05,
+   "to": 22.843,
+   "factor": 7,
+   "annotations": "annotations_S1.json"
+  },
+  {
+   "id": "S2",
+   "clip": "clips/part2026.mp4",
+   "from": 22.85,
+   "to": 23.25,
+   "factor": 10
+  },
+  {
+   "id": "S3",
+   "clip": "clips/part2026.mp4",
+   "from": 23.3,
+   "to": 23.788,
+   "factor": 6,
+   "annotations": "annotations_S3.json"
+  },
+  {
+   "id": "S4",
+   "clip": "clips/part2026.mp4",
+   "from": 23.8,
+   "to": 24.717,
+   "factor": 3
+  },
+  {
+   "id": "S5",
+   "clip": "clips/part2026.mp4",
+   "from": 24.72,
+   "to": 25.61,
+   "factor": 3
+  },
+  {
+   "id": "S6",
+   "clip": "clips/part2026.mp4",
+   "from": 26.0,
+   "to": 27.017,
+   "factor": 3.5
+  },
+  {
+   "id": "S7",
+   "clip": "clips/part2026.mp4",
+   "from": 27.7,
+   "to": 29.734,
+   "factor": 1.75
+  },
+  {
+   "id": "S8",
+   "clip": "clips/part2026.mp4",
+   "from": 30.1,
+   "to": 31.8,
+   "factor": 2
+  },
+  {
+   "id": "S9",
+   "clip": "clips/part2026.mp4",
+   "from": 41.55,
+   "to": 44.542,
+   "factor": 1.2,
+   "annotations": "annotations_S9.json"
+  },
+  {
+   "id": "S10",
+   "clip": "clips/part2026.mp4",
+   "from": 54.7,
+   "to": 56.781,
+   "factor": 1.6
+  },
+  {
+   "id": "S11",
+   "clip": "clips/part2026.mp4",
+   "from": 60.05,
+   "to": 62.77,
+   "factor": 1,
+   "annotations": "annotations_S11.json"
+  },
+  {
+   "id": "S12",
+   "clip": "clips/part2026.mp4",
+   "from": 63.05,
+   "to": 64.039,
+   "factor": 2.7,
+   "annotations": "annotations_S12.json"
+  }
+ ]
+}

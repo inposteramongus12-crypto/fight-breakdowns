@@ -1,0 +1,48 @@
+{
+ "profile": "wide",
+ "segments": [
+  {
+   "id": "S1",
+   "clip": "clips/part2013_5.mp4",
+   "from": 34.5,
+   "to": 37.725,
+   "factor": 1.2,
+   "annotations": "annotations_S1.json"
+  },
+  {
+   "id": "S2",
+   "clip": "clips/part2013_1.mp4",
+   "from": 8.5,
+   "to": 9.383,
+   "factor": 3.5
+  },
+  {
+   "id": "S3",
+   "clip": "clips/part2013_2.mp4",
+   "from": 9,
+   "to": 10.028,
+   "factor": 2.5,
+   "annotations": "annotations_S3.json"
+  },
+  {
+   "id": "S4",
+   "clip": "clips/part2013_4.mp4",
+   "from": 8,
+   "to": 9.632,
+   "factor": 2.2
+  },
+  {
+   "id": "S5",
+   "clip": "clips/part2013_4.mp4",
+   "from": 9.9,
+   "to": 11.395,
+   "factor": 2,
+   "annotations": "annotations_S5.json"
+  }
+ ],
+ "chapter": {
+  "n": 5,
+  "total": 8,
+  "title": "2013: стойка"
+ }
+}
