@@ -35,10 +35,15 @@
   {
    "id": "H5",
    "clip": "clips/part2013_7.mp4",
-   "from": 18.0,
+   "from": 18,
    "to": 20.992,
    "factor": 1.33,
    "annotations": "a5.json"
   }
- ]
+ ],
+ "chapter": {
+  "n": 1,
+  "total": 8,
+  "title": "Хук"
+ }
 }

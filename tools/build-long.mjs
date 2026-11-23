@@ -3,6 +3,7 @@
 //   node tools/build-long.mjs episodes/003-long [--chapter 3|3,4] [--resume] [--keep] [--loudnorm] [--out out/003-long.mp4]
 // episodes/003-long/long.json: {"title": "...", "chapters": [{"id": "ch01", "title": "Хук"}, ...]}
 // --chapter собирает только перечисленные главы (номера по порядку в long.json) и склеивает их в out/<имя>-chN-M.mp4 (если глав больше одной).
+// --concat-only: ничего не пересобирать, склеить готовые out/<имя>-chNN.mp4 (после пересборки отдельных глав).
 // Время рендера по главам пишется в work/<имя>.timing.json.
 // Склейка: видео копируется, звук склеивается и (с --loudnorm) нормализуется по EBU R128 (−16 LUFS); длительность склейки сверяется с суммой глав.
 import fs from 'node:fs';
@@ -10,7 +11,7 @@ import path from 'node:path';
 import {spawnSync} from 'node:child_process';
 import {parseArgs, readJson, die, say, ROOT, ff, probe} from './lib/common.mjs';
 
-const {pos, opt} = parseArgs(process.argv.slice(2), ['resume', 'keep', 'loudnorm']);
+const {pos, opt} = parseArgs(process.argv.slice(2), ['resume', 'keep', 'loudnorm', 'concat-only']);
 if (!pos[0]) die('использование: node tools/build-long.mjs episodes/<имя> [--chapter N] [--resume] [--keep] [--loudnorm] [--out out/<имя>.mp4]');
 const ep = path.resolve(pos[0]);
 const name = path.basename(ep);
@@ -35,6 +36,11 @@ cfg.chapters.forEach((ch, i) => {
 		fs.writeFileSync(tlFile, JSON.stringify(tl, null, 1)); // метка главы берётся из long.json
 	}
 	const out = path.join(outDir, `${name}-${ch.id}.mp4`);
+	if (opt['concat-only']) {
+		if (!fs.existsSync(out)) die(`--concat-only: нет готовой главы ${out}`);
+		files.push(out);
+		return;
+	}
 	say(`глава ${n}/${cfg.chapters.length} «${ch.title}»`);
 	const t0 = Date.now();
 	const r = spawnSync(process.execPath, [path.join(ROOT, 'tools', 'build-short.mjs'), dir, '--profile', 'wide', '--out', out, ...(opt.resume ? ['--resume'] : []), ...(opt.keep ? ['--keep'] : [])], {cwd: ROOT, stdio: 'inherit', env: process.env});
