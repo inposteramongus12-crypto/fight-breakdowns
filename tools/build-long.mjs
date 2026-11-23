@@ -2,7 +2,8 @@
 // собирается build-short.mjs в профиле wide, затем главы склеиваются в один файл.
 //   node tools/build-long.mjs episodes/003-long [--chapter 3|3,4] [--resume] [--keep] [--loudnorm] [--out out/003-long.mp4]
 // episodes/003-long/long.json: {"title": "...", "chapters": [{"id": "ch01", "title": "Хук"}, ...]}
-// --chapter собирает только перечисленные главы (номера по порядку в long.json) и склейку не делает.
+// --chapter собирает только перечисленные главы (номера по порядку в long.json) и склеивает их в out/<имя>-chN-M.mp4 (если глав больше одной).
+// Время рендера по главам пишется в work/<имя>.timing.json.
 // Склейка: видео копируется, звук склеивается и (с --loudnorm) нормализуется по EBU R128 (−16 LUFS); длительность склейки сверяется с суммой глав.
 import fs from 'node:fs';
 import path from 'node:path';
@@ -21,6 +22,7 @@ const only = opt.chapter ? String(opt.chapter).split(',').map(Number) : null;
 const outDir = path.join(ROOT, 'out');
 fs.mkdirSync(outDir, {recursive: true});
 const files = [];
+const timing = [];
 cfg.chapters.forEach((ch, i) => {
 	const n = i + 1;
 	if (only && !only.includes(n)) return;
@@ -34,17 +36,22 @@ cfg.chapters.forEach((ch, i) => {
 	}
 	const out = path.join(outDir, `${name}-${ch.id}.mp4`);
 	say(`глава ${n}/${cfg.chapters.length} «${ch.title}»`);
+	const t0 = Date.now();
 	const r = spawnSync(process.execPath, [path.join(ROOT, 'tools', 'build-short.mjs'), dir, '--profile', 'wide', '--out', out, ...(opt.resume ? ['--resume'] : []), ...(opt.keep ? ['--keep'] : [])], {cwd: ROOT, stdio: 'inherit', env: process.env});
 	if (r.status !== 0) die(`глава ${n} (${ch.id}): build-short завершился с кодом ${r.status}`);
+	const secs = (Date.now() - t0) / 1000;
+	const dur = probe(out).duration;
+	timing.push({n, id: ch.id, render_s: +secs.toFixed(1), video_s: +dur.toFixed(2), per_video_s: +(secs / dur).toFixed(2)});
+	say(`глава ${n}: рендер ${secs.toFixed(0)} с на ${dur.toFixed(1)} с видео (${(secs / dur).toFixed(1)} с рендера на секунду видео)`);
 	files.push(out);
 });
-if (only) {
-	say(`собраны главы ${only.join(', ')}; склейка пропущена (--chapter)`);
+if (only && files.length < 2) {
+	say(`собрана глава ${only.join(', ')}; склейка не нужна (одна глава)`);
 	process.exit(0);
 }
 const list = path.join(outDir, `${name}.chapters.txt`);
 fs.writeFileSync(list, files.map((f) => `file '${f}'`).join('\n'));
-const out = path.resolve(opt.out ?? path.join(outDir, name + '.mp4'));
+const out = path.resolve(opt.out ?? path.join(outDir, only ? `${name}-ch${only.join('-')}.mp4` : name + '.mp4'));
 const af = opt.loudnorm ? ['-af', 'loudnorm=I=-16:TP=-1.5:LRA=11'] : [];
 ff(['-f', 'concat', '-safe', '0', '-i', list, '-c:v', 'copy', ...(opt.loudnorm ? ['-c:a', 'aac', '-b:a', '192k', ...af] : ['-c:a', 'copy']), out], {quiet: true});
 const o = probe(out);
@@ -53,3 +60,5 @@ say(`готово: ${out} (${o.width}×${o.height}, ${o.duration.toFixed(2)} с;
 if (Math.abs(o.duration - sum) > 0.3) say('ВНИМАНИЕ: длительность склейки отличается от суммы глав');
 if (o.width !== 1920 || o.height !== 1080) say(`ВНИМАНИЕ: кадр ${o.width}×${o.height}, ожидалось 1920×1080`);
 fs.rmSync(list, {force: true});
+fs.writeFileSync(path.join(ROOT, 'work', `${name}.timing.json`), JSON.stringify({chapters: timing, concat_s: undefined}, null, 1));
+say('время рендера по главам: ' + JSON.stringify(timing));

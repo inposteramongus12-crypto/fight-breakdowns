@@ -201,7 +201,7 @@ const PlaqueEl: React.FC<{p: Plaque; t: number; h: number; w: number}> = ({p, t,
 	const t1 = p.t1 ?? p.t0 + 2;
 	if (t < p.t0 || t > t1) return null;
 	const pos = p.pos ?? 'tr';
-	const m = h * 0.045;
+	const m = h * 0.06; // отступ плашки от края кадра ≥ 60 px при высоте 1080
 	const st: React.CSSProperties = {...pill(h), opacity: life(t, p.t0, t1, 0.15, 0.2)};
 	if (pos[0] === 't') st.top = m;
 	else st.bottom = m;
@@ -213,7 +213,7 @@ const PlaqueEl: React.FC<{p: Plaque; t: number; h: number; w: number}> = ({p, t,
 const ChapterEl: React.FC<{c: Chapter; t: number; h: number}> = ({c, t, h}) => {
 	const t1 = c.t1 ?? c.t0 + 2.5;
 	if (t < c.t0 || t > t1) return null;
-	const m = h * 0.045;
+	const m = h * 0.06; // отступ плашки от края кадра ≥ 60 px при высоте 1080
 	return (
 		<div style={{...pill(h), top: m, left: m, opacity: life(t, c.t0, t1, 0.2, 0.3)}}>
 			<span style={{color: '#45F6E7', marginRight: h * 0.016}}>

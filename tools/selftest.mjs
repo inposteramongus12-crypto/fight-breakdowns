@@ -265,9 +265,9 @@ if (!skipRender) {
 		const px = (t, x, y) => { const f = rawFrame(longOut, t, 1920, 1080); const i = (y * 1920 + x) * 3; return [f[i], f[i + 1], f[i + 2]]; };
 		const whiteIn = (t, x0, x1, y0, y1) => { const f = rawFrame(longOut, t, 1920, 1080); let n = 0; for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) { const i = (y * 1920 + x) * 3; if (f[i] > 235 && f[i + 1] > 235 && f[i + 2] > 235) n++; } return n; };
 		check('wide annotate: рамка на 1,5× координат (левая сторона x≈870)', whiteIn(0.5, 864, 876, 500, 520) > 40, `белых ${whiteIn(0.5, 864, 876, 500, 520)}`);
-		const pl = px(0.5, 1920 - 49 - 14, 82), bgp = px(0.5, 1000, 82);
+		const pl = px(0.5, 1920 - 65 - 14, 100), bgp = px(0.5, 1000, 100);
 		check('плашка «по данным прессы» вверху справа (тёмная подложка)', pl[0] < 45 && bgp[0] > 55, `плашка r=${pl[0]}, фон r=${bgp[0]}`);
-		const chip = px(0.5, 49 + 14, 82);
+		const chip = px(0.5, 65 + 14, 100);
 		check('метка главы вверху слева (тёмная подложка)', chip[0] < 45, `r=${chip[0]}`);
 		const caps = whiteIn(1.0, 300, 1620, 880, 1060);
 		check('субтитры фразой внизу кадра (белый текст)', caps > 400, `белых ${caps}`);

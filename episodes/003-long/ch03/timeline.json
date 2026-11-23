@@ -1,0 +1,57 @@
+{
+ "profile": "wide",
+ "segments": [
+  {
+   "id": "A1",
+   "clip": "clips/part2013_8.mp4",
+   "from": 0.3,
+   "to": 1.8,
+   "factor": 5,
+   "annotations": "annotations_A.json"
+  },
+  {
+   "id": "A2",
+   "clip": "clips/part2013_8.mp4",
+   "from": 1.8,
+   "to": 3.1,
+   "factor": 5,
+   "annotations": "annotations_A.json"
+  },
+  {
+   "id": "P7",
+   "clip": "clips/part2013_7.mp4",
+   "from": 42.9,
+   "to": 44.55,
+   "factor": 3.5,
+   "annotations": "annotations_P7.json"
+  },
+  {
+   "id": "C3",
+   "clip": "clips/part2013_9.mp4",
+   "from": 36,
+   "to": 37.8,
+   "factor": 2
+  },
+  {
+   "id": "B1",
+   "clip": "clips/part2013_9.mp4",
+   "from": 37.8,
+   "to": 39.4,
+   "factor": 2.5,
+   "annotations": "annotations_B.json"
+  },
+  {
+   "id": "B2",
+   "clip": "clips/part2013_9.mp4",
+   "from": 39.4,
+   "to": 40.4,
+   "factor": 2.5,
+   "annotations": "annotations_B.json"
+  }
+ ],
+ "chapter": {
+  "n": 3,
+  "total": 8,
+  "title": "2013: заход и перевод"
+ }
+}
